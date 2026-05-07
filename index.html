@@ -691,12 +691,40 @@ function switchMinutesTab(tab,contentId) {
 function openModal()  { document.getElementById('modal').classList.add('open'); }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 function closeModalOutside(e) { if(e.target===e.currentTarget) closeModal(); }
-function submitProposal() {
-  const title=document.getElementById('proposal-title').value.trim();
-  if(!title){alert('タイトルを入力してください。');return;}
-  closeModal(); showToast('✅ 提案を受け付けました！ありがとうございます。');
-  document.getElementById('proposal-title').value='';
-  document.getElementById('proposal-body').value='';
+async function submitProposal() {
+  const titleEl = document.getElementById('proposal-title');
+  const bodyEl  = document.getElementById('proposal-body');
+  const submitBtn = document.querySelector('#modal .btn-primary');
+  const title = titleEl.value.trim();
+  const description = bodyEl.value.trim();
+  if (!title) { alert('タイトルを入力してください。'); return; }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = '送信中…';
+
+  const itemId = typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+  const { error } = await db.from('proposals').insert({
+    item_id:     itemId,
+    title:       title,
+    description: description,
+    status:      '提案中',
+  });
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = '提案を送信';
+
+  if (error) {
+    alert('送信に失敗しました。もう一度お試しください。\n' + error.message);
+    return;
+  }
+
+  closeModal();
+  showToast('✅ 提案を受け付けました！ありがとうございます。');
+  titleEl.value = '';
+  bodyEl.value  = '';
 }
 
 // ════════ ユーティリティ ════════
