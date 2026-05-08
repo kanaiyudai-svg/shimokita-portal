@@ -480,8 +480,9 @@ function createProposalCard(p) {
     </button>`
   ).join('');
 
-  const minutesVal = escHtml(p.minutes  || '');
-  const summaryVal = escHtml(p.summary  || '');
+  const minutesVal = escHtml(p.minutes   || '');
+  const summaryVal = escHtml(p.summary   || '');
+  const gdocVal    = escHtml(p.gdoc_url  || '');
 
   wrap.innerHTML = `
     <div class="proposal-card-top">
@@ -513,6 +514,16 @@ function createProposalCard(p) {
             class="minutes-textarea summary"
             id="minutes-summary-${p.id}"
             placeholder="3〜5行程度の要約を入力してください…">${summaryVal}</textarea>
+        </div>
+        <div>
+          <div class="minutes-field-label">Google ドキュメント URL（任意）</div>
+          <input
+            type="url"
+            class="minutes-textarea"
+            style="min-height:unset;resize:none;height:auto;padding:9px 13px;"
+            id="minutes-gdoc-${p.id}"
+            placeholder="https://docs.google.com/document/d/..."
+            value="${gdocVal}">
         </div>
         <div class="minutes-save-row">
           <button class="minutes-save-btn" id="msbtn-${p.id}" onclick="saveMinutes('${p.id}')">
@@ -579,11 +590,13 @@ async function updateStatus(proposalId, newStatus, clickedBtn) {
 async function saveMinutes(proposalId) {
   const bodyEl    = document.getElementById(`minutes-body-${proposalId}`);
   const summaryEl = document.getElementById(`minutes-summary-${proposalId}`);
+  const gdocEl    = document.getElementById(`minutes-gdoc-${proposalId}`);
   const btnEl     = document.getElementById(`msbtn-${proposalId}`);
   const fbEl      = document.getElementById(`msfb-${proposalId}`);
 
   const minutesValue = bodyEl.value;
   const summaryValue = summaryEl.value;
+  const gdocValue    = gdocEl.value.trim();
 
   // フィードバック：保存中
   btnEl.disabled    = true;
@@ -595,6 +608,7 @@ async function saveMinutes(proposalId) {
     .update({
       minutes:    minutesValue,
       summary:    summaryValue,
+      gdoc_url:   gdocValue,
       updated_at: new Date().toISOString(),
     })
     .eq('id', proposalId);
