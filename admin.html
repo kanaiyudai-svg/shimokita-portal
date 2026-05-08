@@ -295,6 +295,28 @@
   .inline-edit-save:hover { background:#3f3f46; }
   .inline-edit-save:disabled { background:#a1a1aa; cursor:default; }
 
+  /* ── アコーディオン ── */
+  .proposal-card-header {
+    padding: 16px 20px; cursor: pointer; display: flex; align-items: center;
+    gap: 12px; transition: background 0.15s; user-select: none;
+  }
+  .proposal-card-header:hover { background: var(--surface2); }
+  .proposal-card-body { display: none; border-top: 1px solid var(--border); }
+  .proposal-card.open .proposal-card-body { display: block; }
+  .admin-card-chevron {
+    flex-shrink: 0; color: #a1a1aa; font-size: 0.75rem;
+    transition: transform 0.2s; margin-left: auto;
+  }
+  .proposal-card.open .admin-card-chevron { transform: rotate(180deg); }
+  .admin-preview-block {
+    padding: 12px 20px 14px; font-size: 0.84rem; color: var(--primary-light);
+    line-height: 1.65; border-bottom: 1px solid var(--border); background: var(--surface2);
+  }
+  .admin-preview-label {
+    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 5px;
+  }
+
   /* empty / error */
   .admin-empty {
     text-align: center; padding: 48px 20px;
@@ -550,84 +572,91 @@ function createProposalCard(p) {
     </button>`
   ).join('');
 
-  const minutesVal = escHtml(p.minutes   || '');
-  const summaryVal = escHtml(p.summary   || '');
-  const gdocVal    = escHtml(p.gdoc_url  || '');
+  const minutesVal  = escHtml(p.minutes  || '');
+  const summaryVal  = escHtml(p.summary  || '');
+  const gdocVal     = escHtml(p.gdoc_url || '');
+  const isPublished = p.is_published !== false;
 
   wrap.innerHTML = `
-    <div class="proposal-card-top">
-      <div class="proposal-card-title-row">
-        <div class="proposal-card-title">${escHtml(p.title)}</div>
-        <span class="current-badge ${badgeCls}" id="badge-${p.id}">${p.status}</span>
+    <div class="proposal-card-header" onclick="toggleAdminCard(this.closest('.proposal-card'))">
+      <div style="flex:1;min-width:0">
+        <div class="proposal-card-title-row">
+          <div class="proposal-card-title">${escHtml(p.title)}</div>
+          <span class="current-badge ${badgeCls}" id="badge-${p.id}">${p.status}</span>
+        </div>
+        ${dateStr ? `<div style="font-size:0.75rem;color:#a1a1aa;margin-top:3px">📅 ${dateStr}</div>` : ''}
       </div>
-      <div class="proposal-description">${escHtml(p.description || '')}</div>
-      ${dateStr ? `<div style="font-size:0.75rem;color:#a1a1aa;margin-top:6px">📅 ${dateStr}</div>` : ''}
+      <div class="admin-card-chevron">▼</div>
     </div>
-    <div class="status-changer">
-      <div class="status-changer-label">ステータスを変更</div>
-      <div class="status-buttons">${statusButtons}</div>
-      <div class="save-feedback" id="fb-${p.id}"></div>
-    </div>
-    <div class="minutes-editor">
-      <div class="minutes-editor-label">📋 議事録・要約</div>
-      <div class="minutes-fields">
-        <div>
-          <div class="minutes-field-label">議事録（本文）</div>
-          <textarea
-            class="minutes-textarea body"
-            id="minutes-body-${p.id}"
-            placeholder="会議での議論内容や決定事項を入力してください…">${minutesVal}</textarea>
+    <div class="proposal-card-body">
+      ${p.description ? `
+      <div class="admin-preview-block">
+        <div class="admin-preview-label">提案内容</div>
+        <div>${escHtml(p.description).replace(/\n/g,'<br>')}</div>
+      </div>` : ''}
+      ${p.summary ? `
+      <div class="admin-preview-block">
+        <div class="admin-preview-label">✨ 要約</div>
+        <div>${escHtml(p.summary).replace(/\n/g,'<br>')}</div>
+      </div>` : ''}
+      <div class="status-changer">
+        <div class="status-changer-label">ステータスを変更</div>
+        <div class="status-buttons">${statusButtons}</div>
+        <div class="save-feedback" id="fb-${p.id}"></div>
+      </div>
+      <div class="minutes-editor">
+        <div class="minutes-editor-label">📋 議事録・要約</div>
+        <div class="minutes-fields">
+          <div>
+            <div class="minutes-field-label">議事録（本文）</div>
+            <textarea class="minutes-textarea body" id="minutes-body-${p.id}"
+              placeholder="会議での議論内容や決定事項を入力してください…">${minutesVal}</textarea>
+          </div>
+          <div>
+            <div class="minutes-field-label">要約（ポップアップに表示される短いまとめ）</div>
+            <textarea class="minutes-textarea summary" id="minutes-summary-${p.id}"
+              placeholder="3〜5行程度の要約を入力してください…">${summaryVal}</textarea>
+          </div>
+          <div>
+            <div class="minutes-field-label">Google ドキュメント URL（任意）</div>
+            <input type="url" class="minutes-textarea"
+              style="min-height:unset;resize:none;height:auto;padding:9px 13px;"
+              id="minutes-gdoc-${p.id}"
+              placeholder="https://docs.google.com/document/d/..."
+              value="${gdocVal}">
+          </div>
+          <div class="minutes-save-row">
+            <button class="minutes-save-btn" id="msbtn-${p.id}" onclick="saveMinutes('${p.id}')">保存する</button>
+            <div class="minutes-save-fb" id="msfb-${p.id}"></div>
+          </div>
         </div>
-        <div>
-          <div class="minutes-field-label">要約（ポップアップに表示される短いまとめ）</div>
-          <textarea
-            class="minutes-textarea summary"
-            id="minutes-summary-${p.id}"
-            placeholder="3〜5行程度の要約を入力してください…">${summaryVal}</textarea>
-        </div>
-        <div>
-          <div class="minutes-field-label">Google ドキュメント URL（任意）</div>
-          <input
-            type="url"
-            class="minutes-textarea"
-            style="min-height:unset;resize:none;height:auto;padding:9px 13px;"
-            id="minutes-gdoc-${p.id}"
-            placeholder="https://docs.google.com/document/d/..."
-            value="${gdocVal}">
-        </div>
-        <div class="minutes-save-row">
-          <button class="minutes-save-btn" id="msbtn-${p.id}" onclick="saveMinutes('${p.id}')">
-            保存する
+      </div>
+      <div class="proposal-actions">
+        <div class="actions-left">
+          <button class="action-btn ${isPublished ? 'published' : 'unpublished'}"
+            id="pub-btn-${p.id}" onclick="togglePublish('${p.id}', this)">
+            ${isPublished ? '👁 公開中' : '🚫 非公開'}
           </button>
-          <div class="minutes-save-fb" id="msfb-${p.id}"></div>
+        </div>
+        <div class="actions-right">
+          <button class="action-btn" onclick="startEditProposal('${p.id}')">✏️ 編集</button>
+          <button class="action-btn danger" onclick="deleteProposal('${p.id}')">🗑️ 削除</button>
         </div>
       </div>
-    </div>
-    <div class="proposal-actions">
-      <div class="actions-left">
-        <button class="action-btn ${p.is_published !== false ? 'published' : 'unpublished'}"
-          id="pub-btn-${p.id}" onclick="togglePublish('${p.id}', this)">
-          ${p.is_published !== false ? '👁 公開中' : '🚫 非公開'}
-        </button>
-      </div>
-      <div class="actions-right">
-        <button class="action-btn" onclick="startEditProposal('${p.id}')">✏️ 編集</button>
-        <button class="action-btn danger" onclick="deleteProposal('${p.id}')">🗑️ 削除</button>
-      </div>
-    </div>
-    <div class="inline-edit-form" id="edit-form-${p.id}" style="display:none">
-      <div class="inline-edit-label">✏️ 議案を編集</div>
-      <div class="inline-edit-field">
-        <label>タイトル</label>
-        <input type="text" class="inline-edit-input" id="edit-title-${p.id}" value="${escHtml(p.title)}">
-      </div>
-      <div class="inline-edit-field">
-        <label>内容・背景</label>
-        <textarea class="inline-edit-textarea" id="edit-desc-${p.id}">${escHtml(p.description || '')}</textarea>
-      </div>
-      <div class="inline-edit-actions">
-        <button class="inline-edit-cancel" onclick="cancelEditProposal('${p.id}')">キャンセル</button>
-        <button class="inline-edit-save" id="edit-save-${p.id}" onclick="saveEditProposal('${p.id}')">変更を保存</button>
+      <div class="inline-edit-form" id="edit-form-${p.id}" style="display:none">
+        <div class="inline-edit-label">✏️ 議案を編集</div>
+        <div class="inline-edit-field">
+          <label>タイトル</label>
+          <input type="text" class="inline-edit-input" id="edit-title-${p.id}" value="${escHtml(p.title)}">
+        </div>
+        <div class="inline-edit-field">
+          <label>内容・背景</label>
+          <textarea class="inline-edit-textarea" id="edit-desc-${p.id}">${escHtml(p.description || '')}</textarea>
+        </div>
+        <div class="inline-edit-actions">
+          <button class="inline-edit-cancel" onclick="cancelEditProposal('${p.id}')">キャンセル</button>
+          <button class="inline-edit-save" id="edit-save-${p.id}" onclick="saveEditProposal('${p.id}')">変更を保存</button>
+        </div>
       </div>
     </div>`;
 
@@ -839,6 +868,13 @@ async function saveEditProposal(proposalId) {
   if (card) card.querySelector('.proposal-card-title').textContent = newTitle;
   document.getElementById(`edit-form-${proposalId}`).style.display = 'none';
   showToast('変更を保存しました');
+}
+
+// ════════════════════════════════════════
+//  アコーディオン開閉
+// ════════════════════════════════════════
+function toggleAdminCard(card) {
+  card.classList.toggle('open');
 }
 
 // ════════════════════════════════════════
