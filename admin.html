@@ -247,6 +247,54 @@
   .minutes-save-fb.success { color: #16a34a; }
   .minutes-save-fb.error   { color: #dc2626; }
 
+  /* ── 議案作成フォーム ── */
+  .create-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:20px; overflow:hidden; }
+  .create-section-toggle { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; cursor:pointer; user-select:none; transition:background .15s; }
+  .create-section-toggle:hover { background:var(--surface2); }
+  .create-toggle-label { font-size:.9rem; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:8px; }
+  .create-chevron { font-size:.7rem; color:var(--text-muted); transition:transform .2s; }
+  .create-chevron.open { transform:rotate(180deg); }
+  .create-form-body { display:none; padding:0 20px 20px; border-top:1px solid var(--border); }
+  .create-form-body.open { display:block; }
+  .create-form-row { margin-top:14px; }
+  .create-form-row label { display:block; font-size:.78rem; font-weight:600; color:var(--primary-light); margin-bottom:5px; }
+  .create-form-input, .create-form-textarea { width:100%; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:9px 13px; font-size:.88rem; font-family:inherit; outline:none; background:var(--surface2); transition:border-color .15s,background .15s; color:var(--text); }
+  .create-form-input:focus, .create-form-textarea:focus { border-color:var(--accent); background:#fff; }
+  .create-form-textarea { min-height:90px; resize:vertical; }
+  .create-submit-row { display:flex; align-items:center; gap:12px; margin-top:14px; }
+  .create-submit-btn { background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); padding:9px 22px; font-size:.88rem; font-weight:700; cursor:pointer; transition:background .15s; }
+  .create-submit-btn:hover { background:#3f3f46; }
+  .create-submit-btn:disabled { background:#a1a1aa; cursor:default; }
+  .create-fb { font-size:.8rem; min-height:18px; display:flex; align-items:center; gap:6px; }
+  .create-fb.success { color:#16a34a; }
+  .create-fb.error   { color:#dc2626; }
+
+  /* ── 公開・削除・編集アクション ── */
+  .proposal-actions { padding:12px 20px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--surface2); flex-wrap:wrap; }
+  .actions-left, .actions-right { display:flex; gap:6px; }
+  .action-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border-radius:var(--radius-sm); border:1.5px solid var(--border); background:var(--surface); font-size:.8rem; font-weight:600; color:var(--text-muted); cursor:pointer; transition:all .15s; user-select:none; }
+  .action-btn:hover { border-color:#a1a1aa; color:var(--primary); background:#f4f4f5; }
+  .action-btn.published   { border-color:#bbf7d0; color:#166534; background:#f0fdf4; }
+  .action-btn.published:hover   { border-color:#4ade80; }
+  .action-btn.unpublished { border-color:#fed7aa; color:#9a3412; background:#fff7ed; }
+  .action-btn.unpublished:hover { border-color:#fb923c; }
+  .action-btn.danger:hover { border-color:#fca5a5; color:#dc2626; background:#fef2f2; }
+
+  /* ── インライン編集フォーム ── */
+  .inline-edit-form { padding:16px 20px 20px; border-top:1px solid var(--border); background:#fafafa; }
+  .inline-edit-label { font-size:.74rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:12px; }
+  .inline-edit-field { margin-bottom:12px; }
+  .inline-edit-field label { display:block; font-size:.78rem; font-weight:600; color:var(--primary-light); margin-bottom:5px; }
+  .inline-edit-input, .inline-edit-textarea { width:100%; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:9px 13px; font-size:.88rem; font-family:inherit; outline:none; background:var(--surface); transition:border-color .15s; color:var(--text); }
+  .inline-edit-input:focus, .inline-edit-textarea:focus { border-color:var(--accent); }
+  .inline-edit-textarea { min-height:90px; resize:vertical; }
+  .inline-edit-actions { display:flex; gap:8px; justify-content:flex-end; }
+  .inline-edit-cancel { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:7px 16px; font-size:.82rem; color:var(--text-muted); cursor:pointer; font-weight:600; }
+  .inline-edit-cancel:hover { background:#f4f4f5; }
+  .inline-edit-save { background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); padding:7px 18px; font-size:.82rem; font-weight:700; cursor:pointer; transition:background .15s; }
+  .inline-edit-save:hover { background:#3f3f46; }
+  .inline-edit-save:disabled { background:#a1a1aa; cursor:default; }
+
   /* empty / error */
   .admin-empty {
     text-align: center; padding: 48px 20px;
@@ -333,6 +381,28 @@
     <div class="page-sub">各議案のステータスを変更すると、ポータルの表示に即時反映されます。</div>
 
     <div class="admin-error" id="admin-error"></div>
+
+    <div class="create-section">
+      <div class="create-section-toggle" onclick="toggleCreateForm()">
+        <div class="create-toggle-label">＋ 新しい議案を作成する</div>
+        <div class="create-chevron" id="create-chevron">▼</div>
+      </div>
+      <div class="create-form-body" id="create-form-body">
+        <div class="create-form-row">
+          <label>タイトル</label>
+          <input class="create-form-input" type="text" id="new-title" placeholder="議案タイトル（例：ランドリー室の稼働時間延長）">
+        </div>
+        <div class="create-form-row">
+          <label>内容・背景</label>
+          <textarea class="create-form-textarea" id="new-desc" placeholder="提案の詳細や背景を入力してください。"></textarea>
+        </div>
+        <div class="create-submit-row">
+          <button class="create-submit-btn" id="create-submit-btn" onclick="createProposal()">作成する</button>
+          <div class="create-fb" id="create-fb"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="proposals-container">
       <div class="admin-loading">読み込み中…</div>
     </div>
@@ -532,6 +602,33 @@ function createProposalCard(p) {
           <div class="minutes-save-fb" id="msfb-${p.id}"></div>
         </div>
       </div>
+    </div>
+    <div class="proposal-actions">
+      <div class="actions-left">
+        <button class="action-btn ${p.is_published !== false ? 'published' : 'unpublished'}"
+          id="pub-btn-${p.id}" onclick="togglePublish('${p.id}', this)">
+          ${p.is_published !== false ? '👁 公開中' : '🚫 非公開'}
+        </button>
+      </div>
+      <div class="actions-right">
+        <button class="action-btn" onclick="startEditProposal('${p.id}')">✏️ 編集</button>
+        <button class="action-btn danger" onclick="deleteProposal('${p.id}')">🗑️ 削除</button>
+      </div>
+    </div>
+    <div class="inline-edit-form" id="edit-form-${p.id}" style="display:none">
+      <div class="inline-edit-label">✏️ 議案を編集</div>
+      <div class="inline-edit-field">
+        <label>タイトル</label>
+        <input type="text" class="inline-edit-input" id="edit-title-${p.id}" value="${escHtml(p.title)}">
+      </div>
+      <div class="inline-edit-field">
+        <label>内容・背景</label>
+        <textarea class="inline-edit-textarea" id="edit-desc-${p.id}">${escHtml(p.description || '')}</textarea>
+      </div>
+      <div class="inline-edit-actions">
+        <button class="inline-edit-cancel" onclick="cancelEditProposal('${p.id}')">キャンセル</button>
+        <button class="inline-edit-save" id="edit-save-${p.id}" onclick="saveEditProposal('${p.id}')">変更を保存</button>
+      </div>
     </div>`;
 
   return wrap;
@@ -628,6 +725,120 @@ async function saveMinutes(proposalId) {
     }, 3000);
     showToast('議事録を保存しました');
   }
+}
+
+// ════════════════════════════════════════
+//  議案作成フォーム
+// ════════════════════════════════════════
+function toggleCreateForm() {
+  const body    = document.getElementById('create-form-body');
+  const chevron = document.getElementById('create-chevron');
+  const isOpen  = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+async function createProposal() {
+  const titleEl = document.getElementById('new-title');
+  const descEl  = document.getElementById('new-desc');
+  const btnEl   = document.getElementById('create-submit-btn');
+  const fbEl    = document.getElementById('create-fb');
+  const title   = titleEl.value.trim();
+  if (!title) { titleEl.focus(); return; }
+
+  btnEl.disabled = true; btnEl.textContent = '作成中…';
+  fbEl.className = 'create-fb';
+
+  const itemId = typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+  const { error } = await db.from('proposals').insert({
+    item_id: itemId, title, description: descEl.value.trim(),
+    status: '提案中', is_published: true,
+  });
+
+  btnEl.disabled = false; btnEl.textContent = '作成する';
+
+  if (error) {
+    fbEl.textContent = '❌ 作成に失敗しました: ' + error.message;
+    fbEl.className = 'create-fb error';
+    return;
+  }
+
+  fbEl.textContent = '✅ 作成しました';
+  fbEl.className = 'create-fb success';
+  titleEl.value = ''; descEl.value = '';
+  setTimeout(() => { fbEl.textContent = ''; fbEl.className = 'create-fb'; }, 3000);
+  fetchProposals();
+}
+
+// ════════════════════════════════════════
+//  公開 / 非公開
+// ════════════════════════════════════════
+async function togglePublish(proposalId, btn) {
+  const isPublished = btn.classList.contains('published');
+  const newValue    = !isPublished;
+  btn.disabled = true;
+
+  const { error } = await db.from('proposals')
+    .update({ is_published: newValue, updated_at: new Date().toISOString() })
+    .eq('id', proposalId);
+
+  btn.disabled = false;
+  if (error) { showToast('更新に失敗しました。'); return; }
+
+  if (newValue) {
+    btn.className = 'action-btn published'; btn.textContent = '👁 公開中';
+  } else {
+    btn.className = 'action-btn unpublished'; btn.textContent = '🚫 非公開';
+  }
+  showToast(newValue ? '議案を公開しました' : '議案を非公開にしました');
+}
+
+// ════════════════════════════════════════
+//  削除
+// ════════════════════════════════════════
+async function deleteProposal(proposalId) {
+  const card  = document.querySelector(`.proposal-card[data-proposal-id="${proposalId}"]`);
+  const title = card?.querySelector('.proposal-card-title')?.textContent || 'この議案';
+  if (!confirm(`「${title}」を削除しますか？\nこの操作は元に戻せません。`)) return;
+
+  const { error } = await db.from('proposals').delete().eq('id', proposalId);
+  if (error) { showToast('削除に失敗しました: ' + error.message); return; }
+  card?.remove();
+  showToast('削除しました');
+}
+
+// ════════════════════════════════════════
+//  インライン編集
+// ════════════════════════════════════════
+function startEditProposal(proposalId) {
+  document.getElementById(`edit-form-${proposalId}`).style.display = 'block';
+}
+function cancelEditProposal(proposalId) {
+  document.getElementById(`edit-form-${proposalId}`).style.display = 'none';
+}
+async function saveEditProposal(proposalId) {
+  const titleEl = document.getElementById(`edit-title-${proposalId}`);
+  const descEl  = document.getElementById(`edit-desc-${proposalId}`);
+  const saveBtn = document.getElementById(`edit-save-${proposalId}`);
+  const newTitle = titleEl.value.trim();
+  if (!newTitle) { titleEl.focus(); return; }
+
+  saveBtn.disabled = true; saveBtn.textContent = '保存中…';
+
+  const { error } = await db.from('proposals')
+    .update({ title: newTitle, description: descEl.value.trim(), updated_at: new Date().toISOString() })
+    .eq('id', proposalId);
+
+  saveBtn.disabled = false; saveBtn.textContent = '変更を保存';
+  if (error) { showToast('編集に失敗しました。'); return; }
+
+  const card = document.querySelector(`.proposal-card[data-proposal-id="${proposalId}"]`);
+  if (card) card.querySelector('.proposal-card-title').textContent = newTitle;
+  document.getElementById(`edit-form-${proposalId}`).style.display = 'none';
+  showToast('変更を保存しました');
 }
 
 // ════════════════════════════════════════

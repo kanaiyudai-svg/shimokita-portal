@@ -178,12 +178,21 @@
   .empty-state .empty-icon { font-size:1.8rem; margin-bottom:8px; opacity:.35; }
   .section-loading { padding:24px 0; text-align:center; color:#a1a1aa; font-size:.85rem; }
 
-  /* ── Proposal CTA ── */
-  .proposal-cta { background:#fff; border:1.5px dashed #d4d4d8; border-radius:var(--radius); padding:20px 24px; text-align:center; cursor:pointer; transition:border-color .15s,background .15s; margin-top:4px; }
-  .proposal-cta:hover { border-color:#a1a1aa; background:var(--surface2); }
-  .proposal-cta .cta-icon { font-size:1.5rem; margin-bottom:6px; opacity:.6; }
-  .proposal-cta strong { font-size:.92rem; color:var(--primary); }
-  .proposal-cta p { font-size:.82rem; color:var(--text-muted); margin-top:4px; }
+  /* ── Google Form CTA ── */
+  .form-cta { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); padding:18px 22px; display:flex; align-items:center; gap:16px; margin-top:4px; box-shadow:var(--shadow); }
+  .form-cta-icon { font-size:1.5rem; flex-shrink:0; opacity:.7; }
+  .form-cta-text { flex:1; min-width:0; }
+  .form-cta-text strong { font-size:.92rem; color:var(--primary); display:block; }
+  .form-cta-text p { font-size:.8rem; color:var(--text-muted); margin-top:3px; }
+  .form-cta-btn { flex-shrink:0; background:var(--primary); color:#fff; border-radius:var(--radius-sm); padding:9px 16px; font-size:.83rem; font-weight:700; text-decoration:none; white-space:nowrap; transition:background .15s; display:inline-flex; align-items:center; gap:5px; }
+  .form-cta-btn:hover { background:#3f3f46; }
+
+  /* ── Past proposals search ── */
+  .search-bar-row { display:flex; gap:8px; margin-bottom:14px; }
+  .search-bar { flex:1; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:9px 13px; font-size:.85rem; font-family:inherit; outline:none; background:var(--surface); transition:border-color .15s; }
+  .search-bar:focus { border-color:var(--accent); }
+  .search-clear { background:none; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:9px 13px; font-size:.82rem; color:var(--text-muted); cursor:pointer; transition:background .15s; }
+  .search-clear:hover { background:#f4f4f5; }
 
   /* ── モーダル共通 ── */
   .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:200; align-items:center; justify-content:center; padding:16px; }
@@ -265,10 +274,14 @@
     <div id="proposals-cards">
       <div class="section-loading" id="proposals-loading">読み込み中…</div>
       <div class="empty-state" id="proposals-empty" style="display:none"><div class="empty-icon">💡</div>現在提案はありません。</div>
-      <div class="proposal-cta" onclick="openModal()">
-        <div class="cta-icon">✏️</div>
-        <strong>新しい議案を提案する</strong>
-        <p>居住者なら誰でも提案できます。スタンプが集まると全体会議の議題になります。</p>
+      <div class="form-cta">
+        <div class="form-cta-icon">✏️</div>
+        <div class="form-cta-text">
+          <strong>新しい議案を提案する</strong>
+          <p>居住者なら誰でも提案できます。スタンプが集まると全体会議の議題になります。</p>
+        </div>
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSc5zKz8f8dSpdgNjBu8mpM68dgtRaJJqu1zXNxlT0s2pxqBFA/viewform?usp=dialog"
+           target="_blank" rel="noopener" class="form-cta-btn">提案フォームを開く →</a>
       </div>
     </div>
   </section>
@@ -278,6 +291,10 @@
       <div class="section-title">過去の議案アーカイブ</div>
       <div class="section-subtitle">これまでの全体会議で決議された議案</div>
     </div>
+    <div class="search-bar-row">
+      <input class="search-bar" id="past-search" type="text" placeholder="🔍 タイトル・内容で検索…" oninput="filterPastProposals(this.value)">
+      <button class="search-clear" onclick="document.getElementById('past-search').value='';filterPastProposals('')">クリア</button>
+    </div>
     <div id="past-cards">
       <div class="empty-state" id="past-empty"><div class="empty-icon">🗂️</div>現在はまだありません。</div>
     </div>
@@ -286,20 +303,6 @@
 
 <footer><a href="admin.html">管理者ページ</a></footer>
 
-<!-- 議案提案モーダル -->
-<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
-  <div class="modal">
-    <h3>新しい議案を提案する</h3>
-    <label>提案タイトル</label>
-    <input type="text" id="proposal-title" placeholder="例：ランドリー室の稼働時間延長">
-    <label>提案の内容・背景</label>
-    <textarea id="proposal-body" placeholder="問題の背景、提案の詳細、期待される効果などを自由に書いてください。"></textarea>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
-      <button class="btn btn-primary" onclick="submitProposal()">提案を送信</button>
-    </div>
-  </div>
-</div>
 
 <!-- 議事録モーダル -->
 <div class="modal-overlay" id="minutes-modal" onclick="closeMinutesModalOutside(event)">
@@ -443,9 +446,20 @@ function createCard(p) {
 
 // ════════ セクション配置 ════════
 function placeCard(p) {
+  const existing = document.querySelector(`.card[data-item-id="${p.item_id}"]`);
+  // 非公開になったカードを取り除く
+  if (p.is_published === false) {
+    if (existing) {
+      existing.remove();
+      delete loadedItems[p.item_id];
+      if (commentSubs[p.item_id]) { supabase.removeChannel(commentSubs[p.item_id]); delete commentSubs[p.item_id]; }
+      delete proposalData[p.item_id];
+    }
+    updateEmptyStates();
+    return;
+  }
   proposalData[p.item_id] = p;
   const cfg = STATUS_CFG[p.status] || STATUS_CFG['提案中'];
-  const existing = document.querySelector(`.card[data-item-id="${p.item_id}"]`);
   if (existing) {
     existing.remove();
     delete loadedItems[p.item_id];
@@ -454,7 +468,7 @@ function placeCard(p) {
   const card      = createCard(p);
   const container = document.getElementById(SECTION_ID[cfg.section]);
   if (cfg.section==='proposals') {
-    const cta = container.querySelector('.proposal-cta');
+    const cta = container.querySelector('.form-cta');
     container.insertBefore(card, cta||null);
   } else {
     container.appendChild(card);
@@ -474,6 +488,7 @@ function updateEmptyStates() {
 // ════════ データ取得 ════════
 async function fetchProposals() {
   const { data, error } = await db.from('proposals').select('*')
+    .eq('is_published', true)
     .order('sort_order',{ascending:true}).order('created_at',{ascending:true});
   if (error) { console.error(error); ['active-loading','proposals-loading'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='読み込みに失敗しました。';}); return; }
   (data||[]).forEach(placeCard);
@@ -728,45 +743,18 @@ function switchMinutesTab(tab,contentId) {
   document.getElementById(contentId).classList.add('active');
 }
 
-// ════════ 提案モーダル ════════
-function openModal()  { document.getElementById('modal').classList.add('open'); }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-function closeModalOutside(e) { if(e.target===e.currentTarget) closeModal(); }
-async function submitProposal() {
-  const titleEl = document.getElementById('proposal-title');
-  const bodyEl  = document.getElementById('proposal-body');
-  const submitBtn = document.querySelector('#modal .btn-primary');
-  const title = titleEl.value.trim();
-  const description = bodyEl.value.trim();
-  if (!title) { alert('タイトルを入力してください。'); return; }
-
-  submitBtn.disabled = true;
-  submitBtn.textContent = '送信中…';
-
-  const itemId = typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : Date.now().toString(36) + Math.random().toString(36).slice(2);
-
-  const { error } = await db.from('proposals').insert({
-    item_id:     itemId,
-    title:       title,
-    description: description,
-    status:      '提案中',
+// ════════ 過去議案 検索 ════════
+function filterPastProposals(query) {
+  const q = query.toLowerCase().trim();
+  const cards = document.querySelectorAll('#past-cards .card');
+  let visible = 0;
+  cards.forEach(card => {
+    const match = !q || card.textContent.toLowerCase().includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
   });
-
-  submitBtn.disabled = false;
-  submitBtn.textContent = '提案を送信';
-
-  if (error) {
-    console.error('proposal insert error:', error);
-    showToast('❌ 送信に失敗しました。もう一度お試しください。');
-    return;
-  }
-
-  closeModal();
-  showToast('✅ 提案を受け付けました！ありがとうございます。');
-  titleEl.value = '';
-  bodyEl.value  = '';
+  const empty = document.getElementById('past-empty');
+  if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
 }
 
 // ════════ ユーティリティ ════════
