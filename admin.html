@@ -7,281 +7,163 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --primary: #18181b;
-    --primary-light: #52525b;
-    --accent: #6366f1;
-    --accent-light: #e0e7ff;
-    --bg: #fafafa;
-    --surface: #ffffff;
-    --surface2: #f9fafb;
-    --text: #18181b;
-    --text-muted: #71717a;
-    --border: #e4e4e7;
-    --radius: 12px;
-    --radius-sm: 8px;
+    --primary: #18181b; --primary-light: #52525b;
+    --accent: #6366f1; --accent-light: #e0e7ff;
+    --bg: #fafafa; --surface: #ffffff; --surface2: #f9fafb;
+    --text: #18181b; --text-muted: #71717a; --border: #e4e4e7;
+    --radius: 12px; --radius-sm: 8px;
     --shadow: 0 1px 8px rgba(0,0,0,0.07);
     --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
-
-    /* status colors */
-    --s-pending-bg:  #fefce8; --s-pending-text:  #854d0e; --s-pending-border:  #fde68a;
-    --s-adopted-bg:  #fefce8; --s-adopted-text:  #92400e; --s-adopted-border:  #fbbf24;
-    --s-active-bg:   #f0fdf4; --s-active-text:   #166534; --s-active-border:   #bbf7d0;
-    --s-resolved-bg: #eff6ff; --s-resolved-text: #1e40af; --s-resolved-border: #bfdbfe;
+    --s-pending-bg:#fefce8;  --s-pending-text:#854d0e;  --s-pending-border:#fde68a;
+    --s-adopted-bg:#fefce8;  --s-adopted-text:#92400e;  --s-adopted-border:#fbbf24;
+    --s-active-bg:#f0fdf4;   --s-active-text:#166534;   --s-active-border:#bbf7d0;
+    --s-resolved-bg:#eff6ff; --s-resolved-text:#1e40af; --s-resolved-border:#bfdbfe;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
-    background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh;
-  }
+  body { font-family: 'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
 
-  /* ════════ LOGIN ════════ */
-  #login-section {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    padding: 24px;
-  }
-  .login-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 40px 36px;
-    width: 100%; max-width: 380px; box-shadow: var(--shadow-lg);
-  }
-  .login-logo {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 28px;
-  }
-  .login-logo-icon {
-    width: 36px; height: 36px; background: var(--primary); border-radius: 9px;
-    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem;
-  }
-  .login-logo-text { font-size: 0.95rem; font-weight: 700; color: var(--primary); }
-  .login-logo-sub  { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
-  .login-title {
-    font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; color: var(--primary);
-  }
-  .login-sub { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 24px; }
-  .form-group { margin-bottom: 14px; }
-  .form-group label {
-    display: block; font-size: 0.8rem; font-weight: 600;
-    color: var(--primary-light); margin-bottom: 5px;
-  }
-  .form-group input {
-    width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-    padding: 10px 13px; font-size: 0.9rem; font-family: inherit;
-    outline: none; background: var(--surface2); transition: border-color 0.15s, background 0.15s;
-    color: var(--text);
-  }
-  .form-group input:focus { border-color: var(--accent); background: #fff; }
-  .login-btn {
-    width: 100%; background: var(--primary); color: #fff; border: none;
-    border-radius: var(--radius-sm); padding: 11px; font-size: 0.9rem; font-weight: 700;
-    cursor: pointer; transition: background 0.15s; margin-top: 6px;
-  }
-  .login-btn:hover { background: #3f3f46; }
-  .login-btn:disabled { background: #a1a1aa; cursor: default; }
-  .login-error {
-    margin-top: 12px; padding: 10px 13px; background: #fef2f2;
-    border: 1px solid #fecaca; border-radius: var(--radius-sm);
-    font-size: 0.82rem; color: #991b1b; display: none;
-  }
-  .login-error.show { display: block; }
+  /* ═══ ログイン ═══ */
+  #login-section { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .login-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:40px 36px; width:100%; max-width:380px; box-shadow:var(--shadow-lg); }
+  .login-logo { display:flex; align-items:center; gap:10px; margin-bottom:28px; }
+  .login-logo-icon { width:36px; height:36px; background:var(--primary); border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.1rem; }
+  .login-logo-text { font-size:.95rem; font-weight:700; color:var(--primary); }
+  .login-logo-sub  { font-size:.75rem; color:var(--text-muted); margin-top:1px; }
+  .login-title { font-size:1.15rem; font-weight:700; margin-bottom:6px; }
+  .login-sub   { font-size:.82rem; color:var(--text-muted); margin-bottom:24px; }
+  .form-group  { margin-bottom:14px; }
+  .form-group label { display:block; font-size:.8rem; font-weight:600; color:var(--primary-light); margin-bottom:5px; }
+  .form-group input { width:100%; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 13px; font-size:.9rem; font-family:inherit; outline:none; background:var(--surface2); transition:border-color .15s; color:var(--text); }
+  .form-group input:focus { border-color:var(--accent); background:#fff; }
+  .login-btn { width:100%; background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); padding:11px; font-size:.9rem; font-weight:700; cursor:pointer; transition:background .15s; margin-top:6px; }
+  .login-btn:hover    { background:#3f3f46; }
+  .login-btn:disabled { background:#a1a1aa; cursor:default; }
+  .login-error { margin-top:12px; padding:10px 13px; background:#fef2f2; border:1px solid #fecaca; border-radius:var(--radius-sm); font-size:.82rem; color:#991b1b; display:none; }
+  .login-error.show { display:block; }
 
-  /* ════════ ADMIN ════════ */
-  #admin-section { display: none; }
+  /* ═══ 管理パネル共通 ═══ */
+  #admin-section { display:none; }
+  .admin-topbar { background:#fff; border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:100; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .admin-topbar-inner { max-width:900px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; height:58px; }
+  .admin-logo { font-size:.95rem; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:8px; }
+  .admin-logo-icon { width:26px; height:26px; background:var(--primary); border-radius:6px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.85rem; }
+  .admin-badge { font-size:.68rem; font-weight:700; background:var(--accent); color:#fff; padding:2px 8px; border-radius:999px; margin-left:6px; }
+  .topbar-right { display:flex; align-items:center; gap:12px; }
+  .user-email  { font-size:.78rem; color:var(--text-muted); }
+  .logout-btn  { background:none; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:6px 14px; font-size:.8rem; font-weight:600; color:var(--text-muted); cursor:pointer; transition:border-color .15s,color .15s; }
+  .logout-btn:hover { border-color:#a1a1aa; color:var(--primary); }
+  .admin-main  { max-width:900px; margin:0 auto; padding:36px 16px 64px; }
+  .page-title  { font-size:1.1rem; font-weight:700; margin-bottom:4px; }
+  .page-sub    { font-size:.82rem; color:var(--text-muted); margin-bottom:28px; }
+  .back-link   { display:inline-flex; align-items:center; gap:5px; font-size:.8rem; color:var(--text-muted); text-decoration:none; margin-bottom:20px; }
+  .back-link:hover { color:var(--primary); }
+  .admin-loading { padding:40px; text-align:center; color:var(--text-muted); font-size:.88rem; }
 
-  /* top bar */
-  .admin-topbar {
-    background: #fff; border-bottom: 1px solid var(--border);
-    padding: 0 24px; position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  }
-  .admin-topbar-inner {
-    max-width: 900px; margin: 0 auto;
-    display: flex; align-items: center; justify-content: space-between; height: 58px;
-  }
-  .admin-logo { font-size: 0.95rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-  .admin-logo-icon {
-    width: 26px; height: 26px; background: var(--primary); border-radius: 6px;
-    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.85rem;
-  }
-  .admin-badge {
-    font-size: 0.68rem; font-weight: 700; background: var(--accent); color: #fff;
-    padding: 2px 8px; border-radius: 999px; margin-left: 6px;
-  }
-  .topbar-right { display: flex; align-items: center; gap: 12px; }
-  .user-email { font-size: 0.78rem; color: var(--text-muted); }
-  .logout-btn {
-    background: none; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-    padding: 6px 14px; font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
-    cursor: pointer; transition: border-color 0.15s, color 0.15s;
-  }
-  .logout-btn:hover { border-color: #a1a1aa; color: var(--primary); }
-
-  /* main content */
-  .admin-main { max-width: 900px; margin: 0 auto; padding: 36px 16px 64px; }
-
-  /* page title */
-  .page-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
-  .page-sub   { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 28px; }
-
-  /* top link */
-  .back-link { display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; color: var(--text-muted); text-decoration: none; margin-bottom: 20px; }
-  .back-link:hover { color: var(--primary); }
-
-  /* loading */
-  .admin-loading { padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.88rem; }
-
-  /* ── Proposal cards ── */
-  .proposals-list { display: flex; flex-direction: column; gap: 16px; }
-
-  .proposal-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
-  }
-
-  .proposal-card-top {
-    padding: 18px 20px 14px; border-bottom: 1px solid var(--border);
-  }
-  .proposal-card-title-row {
-    display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px;
-  }
-  .proposal-card-title { font-size: 1rem; font-weight: 700; flex: 1; line-height: 1.4; }
-  .current-badge {
-    flex-shrink: 0; padding: 3px 9px; border-radius: 999px;
-    font-size: 0.71rem; font-weight: 700; white-space: nowrap; margin-top: 2px;
-    transition: background 0.2s, color 0.2s;
-  }
-  .current-badge.status-pending  { background: var(--s-pending-bg);  color: var(--s-pending-text);  border: 1px solid var(--s-pending-border);  }
-  .current-badge.status-adopted  { background: var(--s-adopted-bg);  color: var(--s-adopted-text);  border: 1px solid var(--s-adopted-border);  }
-  .current-badge.status-active   { background: var(--s-active-bg);   color: var(--s-active-text);   border: 1px solid var(--s-active-border);   }
-  .current-badge.status-resolved { background: var(--s-resolved-bg); color: var(--s-resolved-text); border: 1px solid var(--s-resolved-border); }
-
-  .proposal-description {
-    font-size: 0.84rem; color: var(--primary-light); line-height: 1.65;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  }
-
-  /* status changer */
-  .status-changer { padding: 16px 20px; background: var(--surface2); }
-  .status-changer-label {
-    font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 10px;
-  }
-  .status-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
-
-  .status-option {
-    display: flex; align-items: center; gap: 7px;
-    padding: 8px 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--border);
-    background: var(--surface); cursor: pointer; font-size: 0.84rem; font-weight: 600;
-    color: var(--text-muted); transition: all 0.15s; user-select: none;
-  }
-  .status-option:hover { border-color: #a1a1aa; color: var(--primary); }
-  .status-option.selected {
-    border-color: transparent; font-weight: 700;
-    box-shadow: 0 0 0 2px currentColor;
-  }
-  .status-option.selected.s-提案中      { background: var(--s-pending-bg);  color: var(--s-pending-text);  }
-  .status-option.selected.s-取り上げ確定 { background: var(--s-adopted-bg);  color: var(--s-adopted-text);  }
-  .status-option.selected.s-議論中      { background: var(--s-active-bg);   color: var(--s-active-text);   }
-  .status-option.selected.s-決議済み    { background: var(--s-resolved-bg); color: var(--s-resolved-text); }
-  .status-option:disabled { opacity: 0.5; cursor: default; }
-
-  .status-dot {
-    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-  }
-  .dot-提案中      { background: #f59e0b; }
-  .dot-取り上げ確定 { background: #f77f00; }
-  .dot-議論中      { background: #22c55e; }
-  .dot-決議済み    { background: #3b82f6; }
-
-  /* save feedback */
-  .save-feedback {
-    margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);
-    min-height: 18px; display: flex; align-items: center; gap: 6px;
-    transition: color 0.2s;
-  }
-  .save-feedback.saving  { color: var(--accent); }
-  .save-feedback.success { color: #16a34a; }
-  .save-feedback.error   { color: #dc2626; }
-  .save-spinner {
-    width: 12px; height: 12px; border: 2px solid currentColor; border-top-color: transparent;
-    border-radius: 50%; animation: spin 0.6s linear infinite; flex-shrink: 0;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── Minutes editor ── */
-  .minutes-editor {
-    padding: 16px 20px 20px; border-top: 1px solid var(--border);
-  }
-  .minutes-editor-label {
-    font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 12px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .minutes-fields { display: flex; flex-direction: column; gap: 12px; }
-  .minutes-field-label {
-    font-size: 0.78rem; font-weight: 600; color: var(--primary-light); margin-bottom: 5px;
-  }
-  .minutes-textarea {
-    width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-    padding: 10px 13px; font-size: 0.85rem; font-family: inherit;
-    outline: none; background: var(--surface2); resize: vertical;
-    color: var(--text); line-height: 1.65; transition: border-color 0.15s, background 0.15s;
-  }
-  .minutes-textarea:focus { border-color: var(--accent); background: #fff; }
-  .minutes-textarea.body  { min-height: 120px; }
-  .minutes-textarea.summary { min-height: 70px; }
-  .minutes-save-row {
-    display: flex; align-items: center; gap: 12px; margin-top: 4px;
-  }
-  .minutes-save-btn {
-    background: var(--primary); color: #fff; border: none;
-    border-radius: var(--radius-sm); padding: 9px 20px;
-    font-size: 0.84rem; font-weight: 700; cursor: pointer;
-    transition: background 0.15s; flex-shrink: 0;
-  }
-  .minutes-save-btn:hover    { background: #3f3f46; }
-  .minutes-save-btn:disabled { background: #a1a1aa; cursor: default; }
-  .minutes-save-fb {
-    font-size: 0.8rem; color: var(--text-muted); min-height: 18px;
-    display: flex; align-items: center; gap: 6px; transition: color 0.2s;
-  }
-  .minutes-save-fb.saving  { color: var(--accent); }
-  .minutes-save-fb.success { color: #16a34a; }
-  .minutes-save-fb.error   { color: #dc2626; }
-
-  /* ── 議案作成フォーム ── */
+  /* ═══ 新規作成フォーム ═══ */
   .create-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:20px; overflow:hidden; }
-  .create-section-toggle { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; cursor:pointer; user-select:none; transition:background .15s; }
-  .create-section-toggle:hover { background:var(--surface2); }
-  .create-toggle-label { font-size:.9rem; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:8px; }
+  .create-toggle  { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; cursor:pointer; user-select:none; transition:background .15s; }
+  .create-toggle:hover { background:var(--surface2); }
+  .create-toggle-label { font-size:.9rem; font-weight:700; color:var(--primary); }
   .create-chevron { font-size:.7rem; color:var(--text-muted); transition:transform .2s; }
   .create-chevron.open { transform:rotate(180deg); }
-  .create-form-body { display:none; padding:0 20px 20px; border-top:1px solid var(--border); }
-  .create-form-body.open { display:block; }
-  .create-form-row { margin-top:14px; }
-  .create-form-row label { display:block; font-size:.78rem; font-weight:600; color:var(--primary-light); margin-bottom:5px; }
-  .create-form-input, .create-form-textarea { width:100%; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:9px 13px; font-size:.88rem; font-family:inherit; outline:none; background:var(--surface2); transition:border-color .15s,background .15s; color:var(--text); }
-  .create-form-input:focus, .create-form-textarea:focus { border-color:var(--accent); background:#fff; }
-  .create-form-textarea { min-height:90px; resize:vertical; }
-  .create-submit-row { display:flex; align-items:center; gap:12px; margin-top:14px; }
-  .create-submit-btn { background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); padding:9px 22px; font-size:.88rem; font-weight:700; cursor:pointer; transition:background .15s; }
-  .create-submit-btn:hover { background:#3f3f46; }
-  .create-submit-btn:disabled { background:#a1a1aa; cursor:default; }
-  .create-fb { font-size:.8rem; min-height:18px; display:flex; align-items:center; gap:6px; }
-  .create-fb.success { color:#16a34a; }
-  .create-fb.error   { color:#dc2626; }
+  .create-body { display:none; border-top:1px solid var(--border); padding:16px 20px 20px; }
+  .create-body.open { display:block; }
+  .create-row  { margin-bottom:12px; }
+  .create-row label { display:block; font-size:.78rem; font-weight:600; color:var(--primary-light); margin-bottom:5px; }
+  .create-input, .create-textarea { width:100%; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:9px 13px; font-size:.88rem; font-family:inherit; outline:none; background:var(--surface2); transition:border-color .15s; color:var(--text); }
+  .create-input:focus, .create-textarea:focus { border-color:var(--accent); background:#fff; }
+  .create-textarea { min-height:80px; resize:vertical; }
+  .create-footer { display:flex; align-items:center; gap:10px; margin-top:14px; }
+  .create-btn { background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); padding:9px 22px; font-size:.88rem; font-weight:700; cursor:pointer; transition:background .15s; }
+  .create-btn:hover    { background:#3f3f46; }
+  .create-btn:disabled { background:#a1a1aa; cursor:default; }
+  .create-fb { font-size:.8rem; }
+  .create-fb.ok  { color:#16a34a; }
+  .create-fb.err { color:#dc2626; }
 
-  /* ── 公開・削除・編集アクション ── */
-  .proposal-actions { padding:12px 20px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--surface2); flex-wrap:wrap; }
+  /* ═══ 議案カード ═══ */
+  .proposals-list { display:flex; flex-direction:column; gap:16px; }
+  .proposal-card  { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+
+  /* カードヘッダー（常時表示・クリックで開閉） */
+  .pc-header {
+    padding:16px 20px; display:flex; align-items:center; gap:12px;
+    cursor:pointer; user-select:none; transition:background .15s;
+  }
+  .pc-header:hover { background:var(--surface2); }
+  .pc-header-main  { flex:1; min-width:0; }
+  .pc-title-row    { display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; }
+  .pc-title        { font-size:1rem; font-weight:700; line-height:1.4; flex:1; min-width:0; }
+  .pc-badge        { flex-shrink:0; padding:3px 9px; border-radius:999px; font-size:.71rem; font-weight:700; white-space:nowrap; margin-top:2px; }
+  .pc-badge.status-pending  { background:var(--s-pending-bg);  color:var(--s-pending-text);  border:1px solid var(--s-pending-border);  }
+  .pc-badge.status-adopted  { background:var(--s-adopted-bg);  color:var(--s-adopted-text);  border:1px solid var(--s-adopted-border);  }
+  .pc-badge.status-active   { background:var(--s-active-bg);   color:var(--s-active-text);   border:1px solid var(--s-active-border);   }
+  .pc-badge.status-resolved { background:var(--s-resolved-bg); color:var(--s-resolved-text); border:1px solid var(--s-resolved-border); }
+  .pc-date    { font-size:.75rem; color:#a1a1aa; margin-top:3px; }
+  .pc-chevron { flex-shrink:0; font-size:.75rem; color:#a1a1aa; transition:transform .2s; }
+  .proposal-card.open .pc-chevron { transform:rotate(180deg); }
+
+  /* カードボディ（折りたたみ） */
+  .pc-body { display:none; border-top:1px solid var(--border); }
+  .proposal-card.open .pc-body { display:block; }
+
+  /* ボディ内：説明・要約プレビュー */
+  .pc-preview { padding:12px 20px 14px; background:var(--surface2); border-bottom:1px solid var(--border); font-size:.85rem; color:var(--primary-light); line-height:1.7; }
+  .pc-preview-label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin-bottom:5px; }
+
+  /* ステータス変更 */
+  .status-changer { padding:16px 20px; border-bottom:1px solid var(--border); }
+  .status-changer-label { font-size:.74rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:10px; }
+  .status-buttons { display:flex; flex-wrap:wrap; gap:7px; }
+  .status-opt { display:flex; align-items:center; gap:7px; padding:8px 14px; border-radius:var(--radius-sm); border:1.5px solid var(--border); background:var(--surface); cursor:pointer; font-size:.84rem; font-weight:600; color:var(--text-muted); transition:all .15s; user-select:none; }
+  .status-opt:hover    { border-color:#a1a1aa; color:var(--primary); }
+  .status-opt:disabled { opacity:.5; cursor:default; }
+  .status-opt.selected { border-color:transparent; font-weight:700; box-shadow:0 0 0 2px currentColor; }
+  .status-opt.selected.s-提案中      { background:var(--s-pending-bg);  color:var(--s-pending-text);  }
+  .status-opt.selected.s-取り上げ確定 { background:var(--s-adopted-bg);  color:var(--s-adopted-text);  }
+  .status-opt.selected.s-議論中      { background:var(--s-active-bg);   color:var(--s-active-text);   }
+  .status-opt.selected.s-決議済み    { background:var(--s-resolved-bg); color:var(--s-resolved-text); }
+  .sdot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .sdot-提案中      { background:#f59e0b; }
+  .sdot-取り上げ確定 { background:#f77f00; }
+  .sdot-議論中      { background:#22c55e; }
+  .sdot-決議済み    { background:#3b82f6; }
+  .status-fb { margin-top:10px; font-size:.8rem; min-height:18px; display:flex; align-items:center; gap:6px; }
+  .status-fb.saving  { color:var(--accent); }
+  .status-fb.success { color:#16a34a; }
+  .status-fb.error   { color:#dc2626; }
+
+  /* 議事録エディタ */
+  .minutes-editor { padding:16px 20px 20px; border-bottom:1px solid var(--border); }
+  .minutes-editor-label { font-size:.74rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:12px; }
+  .minutes-field { margin-bottom:12px; }
+  .minutes-field-label { font-size:.78rem; font-weight:600; color:var(--primary-light); margin-bottom:5px; }
+  .minutes-textarea { width:100%; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 13px; font-size:.85rem; font-family:inherit; outline:none; background:var(--surface2); resize:vertical; color:var(--text); line-height:1.65; transition:border-color .15s; }
+  .minutes-textarea:focus { border-color:var(--accent); background:#fff; }
+  .minutes-textarea.body    { min-height:120px; }
+  .minutes-textarea.summary { min-height:70px; }
+  .minutes-save-row { display:flex; align-items:center; gap:12px; margin-top:4px; }
+  .minutes-save-btn { background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); padding:9px 20px; font-size:.84rem; font-weight:700; cursor:pointer; transition:background .15s; flex-shrink:0; }
+  .minutes-save-btn:hover    { background:#3f3f46; }
+  .minutes-save-btn:disabled { background:#a1a1aa; cursor:default; }
+  .minutes-save-fb { font-size:.8rem; min-height:18px; display:flex; align-items:center; gap:6px; }
+  .minutes-save-fb.saving  { color:var(--accent); }
+  .minutes-save-fb.success { color:#16a34a; }
+  .minutes-save-fb.error   { color:#dc2626; }
+
+  /* アクションバー */
+  .pc-actions { padding:12px 20px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
   .actions-left, .actions-right { display:flex; gap:6px; }
-  .action-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border-radius:var(--radius-sm); border:1.5px solid var(--border); background:var(--surface); font-size:.8rem; font-weight:600; color:var(--text-muted); cursor:pointer; transition:all .15s; user-select:none; }
-  .action-btn:hover { border-color:#a1a1aa; color:var(--primary); background:#f4f4f5; }
-  .action-btn.published   { border-color:#bbf7d0; color:#166534; background:#f0fdf4; }
-  .action-btn.published:hover   { border-color:#4ade80; }
-  .action-btn.unpublished { border-color:#fed7aa; color:#9a3412; background:#fff7ed; }
+  .action-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border-radius:var(--radius-sm); border:1.5px solid var(--border); background:var(--surface); font-size:.8rem; font-weight:600; color:var(--text-muted); cursor:pointer; transition:all .15s; }
+  .action-btn:hover          { border-color:#a1a1aa; color:var(--primary); background:#f4f4f5; }
+  .action-btn.published      { border-color:#bbf7d0; color:#166534; background:#f0fdf4; }
+  .action-btn.published:hover { border-color:#4ade80; }
+  .action-btn.unpublished    { border-color:#fed7aa; color:#9a3412; background:#fff7ed; }
   .action-btn.unpublished:hover { border-color:#fb923c; }
-  .action-btn.danger:hover { border-color:#fca5a5; color:#dc2626; background:#fef2f2; }
+  .action-btn.danger:hover   { border-color:#fca5a5; color:#dc2626; background:#fef2f2; }
 
-  /* ── インライン編集フォーム ── */
-  .inline-edit-form { padding:16px 20px 20px; border-top:1px solid var(--border); background:#fafafa; }
+  /* インライン編集 */
+  .inline-edit { display:none; padding:16px 20px 20px; border-top:1px solid var(--border); background:#fafafa; }
   .inline-edit-label { font-size:.74rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:12px; }
   .inline-edit-field { margin-bottom:12px; }
   .inline-edit-field label { display:block; font-size:.78rem; font-weight:600; color:var(--primary-light); margin-bottom:5px; }
@@ -289,69 +171,37 @@
   .inline-edit-input:focus, .inline-edit-textarea:focus { border-color:var(--accent); }
   .inline-edit-textarea { min-height:90px; resize:vertical; }
   .inline-edit-actions { display:flex; gap:8px; justify-content:flex-end; }
-  .inline-edit-cancel { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:7px 16px; font-size:.82rem; color:var(--text-muted); cursor:pointer; font-weight:600; }
-  .inline-edit-cancel:hover { background:#f4f4f5; }
-  .inline-edit-save { background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); padding:7px 18px; font-size:.82rem; font-weight:700; cursor:pointer; transition:background .15s; }
-  .inline-edit-save:hover { background:#3f3f46; }
-  .inline-edit-save:disabled { background:#a1a1aa; cursor:default; }
+  .ie-cancel { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:7px 16px; font-size:.82rem; color:var(--text-muted); cursor:pointer; font-weight:600; }
+  .ie-cancel:hover { background:#f4f4f5; }
+  .ie-save   { background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); padding:7px 18px; font-size:.82rem; font-weight:700; cursor:pointer; transition:background .15s; }
+  .ie-save:hover    { background:#3f3f46; }
+  .ie-save:disabled { background:#a1a1aa; cursor:default; }
 
-  /* ── アコーディオン ── */
-  .proposal-card-header {
-    padding: 16px 20px; cursor: pointer; display: flex; align-items: center;
-    gap: 12px; transition: background 0.15s; user-select: none;
-  }
-  .proposal-card-header:hover { background: var(--surface2); }
-  .proposal-card-body { display: none; border-top: 1px solid var(--border); }
-  .proposal-card.open .proposal-card-body { display: block; }
-  .admin-card-chevron {
-    flex-shrink: 0; color: #a1a1aa; font-size: 0.75rem;
-    transition: transform 0.2s; margin-left: auto;
-  }
-  .proposal-card.open .admin-card-chevron { transform: rotate(180deg); }
-  .admin-preview-block {
-    padding: 12px 20px 14px; font-size: 0.84rem; color: var(--primary-light);
-    line-height: 1.65; border-bottom: 1px solid var(--border); background: var(--surface2);
-  }
-  .admin-preview-label {
-    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 5px;
-  }
+  /* spinner */
+  .sp { width:12px; height:12px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin .6s linear infinite; flex-shrink:0; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 
   /* empty / error */
-  .admin-empty {
-    text-align: center; padding: 48px 20px;
-    color: var(--text-muted); font-size: 0.88rem;
-  }
-  .admin-empty .empty-icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.35; }
-  .admin-error {
-    background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-sm);
-    padding: 14px 18px; font-size: 0.86rem; color: #991b1b; margin-bottom: 20px;
-    display: none;
-  }
-  .admin-error.show { display: block; }
+  .admin-empty { text-align:center; padding:48px 20px; color:var(--text-muted); font-size:.88rem; }
+  .admin-empty .ei { font-size:2rem; margin-bottom:10px; opacity:.35; }
+  .admin-error { background:#fef2f2; border:1px solid #fecaca; border-radius:var(--radius-sm); padding:14px 18px; font-size:.86rem; color:#991b1b; margin-bottom:20px; display:none; }
+  .admin-error.show { display:block; }
 
   /* toast */
-  #toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: var(--primary); color: #fff; padding: 10px 22px; border-radius: 999px;
-    font-size: 0.84rem; font-weight: 700; z-index: 300; white-space: nowrap;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.18); opacity: 0; pointer-events: none;
-    transition: opacity 0.25s;
-  }
-  #toast.show { opacity: 1; }
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--primary); color:#fff; padding:10px 22px; border-radius:999px; font-size:.84rem; font-weight:700; z-index:300; white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,.18); opacity:0; pointer-events:none; transition:opacity .25s; }
+  #toast.show { opacity:1; }
 
-  @media (max-width: 520px) {
-    .login-card { padding: 28px 20px; }
-    .status-buttons { gap: 5px; }
-    .status-option { padding: 7px 11px; font-size: 0.8rem; }
+  @media (max-width:520px) {
+    .login-card { padding:28px 20px; }
+    .status-buttons { gap:5px; }
+    .status-opt { padding:7px 11px; font-size:.8rem; }
+    .pc-header { padding:13px 14px; }
   }
 </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════
-     ログイン画面
-════════════════════════════════════════ -->
+<!-- ログイン画面 -->
 <div id="login-section">
   <div class="login-card">
     <div class="login-logo">
@@ -363,14 +213,13 @@
     </div>
     <div class="login-title">管理者ログイン</div>
     <div class="login-sub">議案のステータスを管理できます。</div>
-
     <form id="login-form" onsubmit="handleLogin(event)">
       <div class="form-group">
-        <label for="email">メールアドレス</label>
+        <label>メールアドレス</label>
         <input type="email" id="email" placeholder="admin@example.com" required autocomplete="email">
       </div>
       <div class="form-group">
-        <label for="password">パスワード</label>
+        <label>パスワード</label>
         <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
       </div>
       <button type="submit" class="login-btn" id="login-btn">ログイン</button>
@@ -379,9 +228,7 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     管理パネル
-════════════════════════════════════════ -->
+<!-- 管理パネル -->
 <div id="admin-section">
   <div class="admin-topbar">
     <div class="admin-topbar-inner">
@@ -400,27 +247,27 @@
   <div class="admin-main">
     <a href="index.html" class="back-link">← ポータルに戻る</a>
     <div class="page-title">議案ステータス管理</div>
-    <div class="page-sub">各議案のステータスを変更すると、ポータルの表示に即時反映されます。</div>
-
+    <div class="page-sub">議案をクリックすると詳細・編集が展開されます。</div>
     <div class="admin-error" id="admin-error"></div>
 
+    <!-- 新規作成 -->
     <div class="create-section">
-      <div class="create-section-toggle" onclick="toggleCreateForm()">
-        <div class="create-toggle-label">＋ 新しい議案を作成する</div>
-        <div class="create-chevron" id="create-chevron">▼</div>
+      <div class="create-toggle" onclick="toggleCreate()">
+        <span class="create-toggle-label">＋ 新しい議案を作成する</span>
+        <span class="create-chevron" id="create-chevron">▼</span>
       </div>
-      <div class="create-form-body" id="create-form-body">
-        <div class="create-form-row">
+      <div class="create-body" id="create-body">
+        <div class="create-row">
           <label>タイトル</label>
-          <input class="create-form-input" type="text" id="new-title" placeholder="議案タイトル（例：ランドリー室の稼働時間延長）">
+          <input class="create-input" type="text" id="new-title" placeholder="議案タイトル">
         </div>
-        <div class="create-form-row">
+        <div class="create-row">
           <label>内容・背景</label>
-          <textarea class="create-form-textarea" id="new-desc" placeholder="提案の詳細や背景を入力してください。"></textarea>
+          <textarea class="create-textarea" id="new-desc" placeholder="提案の詳細や背景を入力してください。"></textarea>
         </div>
-        <div class="create-submit-row">
-          <button class="create-submit-btn" id="create-submit-btn" onclick="createProposal()">作成する</button>
-          <div class="create-fb" id="create-fb"></div>
+        <div class="create-footer">
+          <button class="create-btn" id="create-btn" onclick="createProposal()">作成する</button>
+          <span class="create-fb" id="create-fb"></span>
         </div>
       </div>
     </div>
@@ -434,466 +281,335 @@
 <div id="toast"></div>
 
 <script>
-// ════════════════════════════════════════
-//  Supabase 設定 ── ご自身の値に書き換えてください
-// ════════════════════════════════════════
 const SUPABASE_URL  = 'https://ggdjoxnjwqthhkwpcvqq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZGpveG5qd3F0aGhrd3BjdnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTYyNjIsImV4cCI6MjA5MzczMjI2Mn0.X1AvGI5I8I94siB6MS1B_ou9TlA5864wUNsuy6SK4bc';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// ────────────────────────────────────────
-//  ステータス定義
-// ────────────────────────────────────────
 const STATUSES = [
-  { key: '提案中',      label: '提案中',      badge: 'status-pending',  desc: '居住者セクションに表示' },
-  { key: '取り上げ確定', label: '取り上げ確定', badge: 'status-adopted',  desc: '採択予定バッジ付き' },
-  { key: '議論中',      label: '議論中',      badge: 'status-active',   desc: '進行中セクションに移動' },
-  { key: '決議済み',    label: '決議済み',    badge: 'status-resolved', desc: 'アーカイブに移動' },
+  { key:'提案中',      desc:'居住者セクションに表示' },
+  { key:'取り上げ確定', desc:'採択予定バッジ付き' },
+  { key:'議論中',      desc:'進行中セクションに移動' },
+  { key:'決議済み',    desc:'アーカイブに移動' },
 ];
 const BADGE_CFG = {
-  '提案中':      'status-pending',
-  '取り上げ確定': 'status-adopted',
-  '議論中':      'status-active',
-  '決議済み':    'status-resolved',
+  '提案中':'status-pending', '取り上げ確定':'status-adopted',
+  '議論中':'status-active',  '決議済み':'status-resolved',
 };
 
-// ════════════════════════════════════════
-//  認証
-// ════════════════════════════════════════
+// ─── 認証 ───
 async function init() {
   const { data: { session } } = await db.auth.getSession();
-  if (session) {
-    showAdmin(session.user);
-  }
-  // onAuthStateChange で状態変化を監視
+  if (session) showAdmin(session.user);
   db.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN'  && session) showAdmin(session.user);
     if (event === 'SIGNED_OUT')            showLogin();
   });
 }
-
 function showLogin() {
   document.getElementById('login-section').style.display = 'flex';
   document.getElementById('admin-section').style.display = 'none';
 }
-
 function showAdmin(user) {
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('admin-section').style.display = 'block';
   document.getElementById('user-email').textContent = user?.email || '';
   fetchProposals();
 }
-
 async function handleLogin(e) {
   e.preventDefault();
-  const email    = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const btn      = document.getElementById('login-btn');
-  const errEl    = document.getElementById('login-error');
-
-  btn.disabled    = true;
-  btn.textContent = 'ログイン中…';
-  errEl.classList.remove('show');
-
-  const { error } = await db.auth.signInWithPassword({ email, password });
-
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  btn.disabled = true; btn.textContent = 'ログイン中…'; err.classList.remove('show');
+  const { error } = await db.auth.signInWithPassword({
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value,
+  });
   if (error) {
-    errEl.textContent = 'ログインに失敗しました。メールアドレスとパスワードを確認してください。';
-    errEl.classList.add('show');
-    btn.disabled    = false;
-    btn.textContent = 'ログイン';
+    err.textContent = 'ログインに失敗しました。'; err.classList.add('show');
+    btn.disabled = false; btn.textContent = 'ログイン';
   }
-  // 成功時は onAuthStateChange が呼ばれ showAdmin() に遷移
 }
+async function handleLogout() { await db.auth.signOut(); }
 
-async function handleLogout() {
-  await db.auth.signOut();
-}
-
-// ════════════════════════════════════════
-//  議案データ
-// ════════════════════════════════════════
+// ─── データ取得 ───
 async function fetchProposals() {
   const container = document.getElementById('proposals-container');
   container.innerHTML = '<div class="admin-loading">読み込み中…</div>';
-
-  const { data, error } = await db
-    .from('proposals')
-    .select('*')
-    .order('sort_order', { ascending: true })
-    .order('created_at',  { ascending: true });
-
+  const { data, error } = await db.from('proposals').select('*')
+    .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
   if (error) {
-    const errEl = document.getElementById('admin-error');
-    errEl.textContent = `データの取得に失敗しました: ${error.message}`;
-    errEl.classList.add('show');
-    container.innerHTML = '';
-    return;
+    document.getElementById('admin-error').textContent = 'データの取得に失敗しました: ' + error.message;
+    document.getElementById('admin-error').classList.add('show');
+    container.innerHTML = ''; return;
   }
-
   container.innerHTML = '';
   if (!data || data.length === 0) {
-    container.innerHTML = `
-      <div class="admin-empty">
-        <div class="empty-icon">📋</div>
-        議案がまだ登録されていません。
-      </div>`;
+    container.innerHTML = '<div class="admin-empty"><div class="ei">📋</div>議案がまだ登録されていません。</div>';
     return;
   }
-
   const list = document.createElement('div');
   list.className = 'proposals-list';
-  data.forEach(p => list.appendChild(createProposalCard(p)));
+  data.forEach(p => list.appendChild(buildCard(p)));
   container.appendChild(list);
 }
 
-// ════════════════════════════════════════
-//  議案カード生成
-// ════════════════════════════════════════
-function createProposalCard(p) {
+// ─── カード生成 ───
+function buildCard(p) {
   const wrap = document.createElement('div');
   wrap.className = 'proposal-card';
-  wrap.dataset.proposalId = p.id;
-  wrap.dataset.itemId     = p.item_id;
+  wrap.dataset.id = p.id;
 
-  const badgeCls = BADGE_CFG[p.status] || 'status-pending';
-  const dateStr  = p.created_at
+  const badgeCls   = BADGE_CFG[p.status] || 'status-pending';
+  const dateStr    = p.created_at
     ? new Date(p.created_at).toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric' })
     : '';
-
-  const statusButtons = STATUSES.map(s => `
-    <button
-      class="status-option s-${s.key} ${s.key === p.status ? 'selected' : ''}"
-      data-status="${s.key}"
-      title="${s.desc}"
-      onclick="updateStatus('${p.id}', '${s.key}', this)">
-      <span class="status-dot dot-${s.key}"></span>
-      ${escHtml(s.label)}
-    </button>`
-  ).join('');
-
-  const minutesVal  = escHtml(p.minutes  || '');
-  const summaryVal  = escHtml(p.summary  || '');
-  const gdocVal     = escHtml(p.gdoc_url || '');
   const isPublished = p.is_published !== false;
 
+  const statusBtns = STATUSES.map(s => `
+    <button class="status-opt s-${s.key} ${s.key===p.status?'selected':''}"
+      data-key="${s.key}" title="${s.desc}"
+      onclick="changeStatus('${p.id}','${s.key}',this)">
+      <span class="sdot sdot-${s.key}"></span>${escHtml(s.key)}
+    </button>`).join('');
+
   wrap.innerHTML = `
-    <div class="proposal-card-header" onclick="toggleAdminCard(this.closest('.proposal-card'))">
-      <div style="flex:1;min-width:0">
-        <div class="proposal-card-title-row">
-          <div class="proposal-card-title">${escHtml(p.title)}</div>
-          <span class="current-badge ${badgeCls}" id="badge-${p.id}">${p.status}</span>
+    <!-- ヘッダー：クリックで開閉 -->
+    <div class="pc-header" onclick="toggleCard(this.parentElement)">
+      <div class="pc-header-main">
+        <div class="pc-title-row">
+          <div class="pc-title">${escHtml(p.title)}</div>
+          <span class="pc-badge ${badgeCls}" id="badge-${p.id}">${p.status}</span>
         </div>
-        ${dateStr ? `<div style="font-size:0.75rem;color:#a1a1aa;margin-top:3px">📅 ${dateStr}</div>` : ''}
+        ${dateStr ? `<div class="pc-date">📅 ${dateStr}</div>` : ''}
       </div>
-      <div class="admin-card-chevron">▼</div>
+      <div class="pc-chevron">▼</div>
     </div>
-    <div class="proposal-card-body">
+
+    <!-- ボディ：折りたたみ -->
+    <div class="pc-body">
+
       ${p.description ? `
-      <div class="admin-preview-block">
-        <div class="admin-preview-label">提案内容</div>
+      <div class="pc-preview">
+        <div class="pc-preview-label">提案内容</div>
         <div>${escHtml(p.description).replace(/\n/g,'<br>')}</div>
       </div>` : ''}
+
       ${p.summary ? `
-      <div class="admin-preview-block">
-        <div class="admin-preview-label">✨ 要約</div>
+      <div class="pc-preview" style="border-top:1px solid var(--border)">
+        <div class="pc-preview-label">✨ 要約</div>
         <div>${escHtml(p.summary).replace(/\n/g,'<br>')}</div>
       </div>` : ''}
+
+      <!-- ステータス変更 -->
       <div class="status-changer">
         <div class="status-changer-label">ステータスを変更</div>
-        <div class="status-buttons">${statusButtons}</div>
-        <div class="save-feedback" id="fb-${p.id}"></div>
+        <div class="status-buttons">${statusBtns}</div>
+        <div class="status-fb" id="sfb-${p.id}"></div>
       </div>
+
+      <!-- 議事録・要約エディタ -->
       <div class="minutes-editor">
-        <div class="minutes-editor-label">📋 議事録・要約</div>
-        <div class="minutes-fields">
-          <div>
-            <div class="minutes-field-label">議事録（本文）</div>
-            <textarea class="minutes-textarea body" id="minutes-body-${p.id}"
-              placeholder="会議での議論内容や決定事項を入力してください…">${minutesVal}</textarea>
-          </div>
-          <div>
-            <div class="minutes-field-label">要約（ポップアップに表示される短いまとめ）</div>
-            <textarea class="minutes-textarea summary" id="minutes-summary-${p.id}"
-              placeholder="3〜5行程度の要約を入力してください…">${summaryVal}</textarea>
-          </div>
-          <div>
-            <div class="minutes-field-label">Google ドキュメント URL（任意）</div>
-            <input type="url" class="minutes-textarea"
-              style="min-height:unset;resize:none;height:auto;padding:9px 13px;"
-              id="minutes-gdoc-${p.id}"
-              placeholder="https://docs.google.com/document/d/..."
-              value="${gdocVal}">
-          </div>
-          <div class="minutes-save-row">
-            <button class="minutes-save-btn" id="msbtn-${p.id}" onclick="saveMinutes('${p.id}')">保存する</button>
-            <div class="minutes-save-fb" id="msfb-${p.id}"></div>
-          </div>
+        <div class="minutes-editor-label">📋 議事録・要約を編集</div>
+        <div class="minutes-field">
+          <div class="minutes-field-label">議事録（本文）</div>
+          <textarea class="minutes-textarea body" id="mbody-${p.id}"
+            placeholder="会議での議論内容や決定事項…">${escHtml(p.minutes||'')}</textarea>
+        </div>
+        <div class="minutes-field">
+          <div class="minutes-field-label">要約（ポータルのポップアップに表示）</div>
+          <textarea class="minutes-textarea summary" id="msum-${p.id}"
+            placeholder="3〜5行程度の要約…">${escHtml(p.summary||'')}</textarea>
+        </div>
+        <div class="minutes-field">
+          <div class="minutes-field-label">Google ドキュメント URL（任意）</div>
+          <input type="url" class="minutes-textarea" style="min-height:unset;resize:none;height:auto;padding:9px 13px;"
+            id="mgdoc-${p.id}" placeholder="https://docs.google.com/document/d/..."
+            value="${escHtml(p.gdoc_url||'')}">
+        </div>
+        <div class="minutes-save-row">
+          <button class="minutes-save-btn" id="msbtn-${p.id}" onclick="saveMinutes('${p.id}')">保存する</button>
+          <div class="minutes-save-fb" id="msfb-${p.id}"></div>
         </div>
       </div>
-      <div class="proposal-actions">
+
+      <!-- アクション -->
+      <div class="pc-actions">
         <div class="actions-left">
-          <button class="action-btn ${isPublished ? 'published' : 'unpublished'}"
-            id="pub-btn-${p.id}" onclick="togglePublish('${p.id}', this)">
-            ${isPublished ? '👁 公開中' : '🚫 非公開'}
+          <button class="action-btn ${isPublished?'published':'unpublished'}"
+            id="pub-${p.id}" onclick="togglePublish('${p.id}',this)">
+            ${isPublished?'👁 公開中':'🚫 非公開'}
           </button>
         </div>
         <div class="actions-right">
-          <button class="action-btn" onclick="startEditProposal('${p.id}')">✏️ 編集</button>
+          <button class="action-btn" onclick="startEdit('${p.id}')">✏️ 編集</button>
           <button class="action-btn danger" onclick="deleteProposal('${p.id}')">🗑️ 削除</button>
         </div>
       </div>
-      <div class="inline-edit-form" id="edit-form-${p.id}" style="display:none">
+
+      <!-- インライン編集フォーム -->
+      <div class="inline-edit" id="iedit-${p.id}">
         <div class="inline-edit-label">✏️ 議案を編集</div>
         <div class="inline-edit-field">
           <label>タイトル</label>
-          <input type="text" class="inline-edit-input" id="edit-title-${p.id}" value="${escHtml(p.title)}">
+          <input type="text" class="inline-edit-input" id="ietitle-${p.id}" value="${escHtml(p.title)}">
         </div>
         <div class="inline-edit-field">
           <label>内容・背景</label>
-          <textarea class="inline-edit-textarea" id="edit-desc-${p.id}">${escHtml(p.description || '')}</textarea>
+          <textarea class="inline-edit-textarea" id="iedesc-${p.id}">${escHtml(p.description||'')}</textarea>
         </div>
         <div class="inline-edit-actions">
-          <button class="inline-edit-cancel" onclick="cancelEditProposal('${p.id}')">キャンセル</button>
-          <button class="inline-edit-save" id="edit-save-${p.id}" onclick="saveEditProposal('${p.id}')">変更を保存</button>
+          <button class="ie-cancel" onclick="cancelEdit('${p.id}')">キャンセル</button>
+          <button class="ie-save" id="iesave-${p.id}" onclick="saveEdit('${p.id}')">変更を保存</button>
         </div>
       </div>
-    </div>`;
 
+    </div>`;
   return wrap;
 }
 
-// ════════════════════════════════════════
-//  ステータス更新
-// ════════════════════════════════════════
-async function updateStatus(proposalId, newStatus, clickedBtn) {
-  const card   = clickedBtn.closest('.proposal-card');
-  const fbEl   = document.getElementById(`fb-${proposalId}`);
-  const badgeEl = document.getElementById(`badge-${proposalId}`);
-  const allBtns = card.querySelectorAll('.status-option');
+// ─── アコーディオン ───
+function toggleCard(card) {
+  card.classList.toggle('open');
+}
 
-  // 同じステータスなら何もしない
-  if (clickedBtn.classList.contains('selected')) return;
-
-  // 楽観的 UI 更新
-  allBtns.forEach(b => { b.classList.remove('selected'); b.disabled = true; });
-  clickedBtn.classList.add('selected');
-
-  // バッジ更新
-  const badgeCls = BADGE_CFG[newStatus] || 'status-pending';
-  badgeEl.className = `current-badge ${badgeCls}`;
-  badgeEl.textContent = newStatus;
-
-  // フィードバック：保存中
-  fbEl.innerHTML = '<span class="save-spinner"></span> 保存中…';
-  fbEl.className = 'save-feedback saving';
-
-  const { error } = await db
-    .from('proposals')
-    .update({ status: newStatus, updated_at: new Date().toISOString() })
-    .eq('id', proposalId);
-
-  allBtns.forEach(b => b.disabled = false);
-
+// ─── ステータス更新 ───
+async function changeStatus(id, newStatus, btn) {
+  const card  = document.querySelector(`.proposal-card[data-id="${id}"]`);
+  const fb    = document.getElementById(`sfb-${id}`);
+  const badge = document.getElementById(`badge-${id}`);
+  const btns  = card.querySelectorAll('.status-opt');
+  if (btn.classList.contains('selected')) return;
+  btns.forEach(b => { b.classList.remove('selected'); b.disabled = true; });
+  btn.classList.add('selected');
+  badge.className = `pc-badge ${BADGE_CFG[newStatus]||'status-pending'}`;
+  badge.textContent = newStatus;
+  fb.innerHTML = '<span class="sp"></span> 保存中…'; fb.className = 'status-fb saving';
+  const { error } = await db.from('proposals')
+    .update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
+  btns.forEach(b => b.disabled = false);
   if (error) {
-    fbEl.innerHTML = '❌ 保存に失敗しました。';
-    fbEl.className = 'save-feedback error';
-    showToast('保存に失敗しました。');
+    fb.innerHTML = '❌ 保存に失敗しました'; fb.className = 'status-fb error';
   } else {
-    fbEl.innerHTML = '✅ 保存しました';
-    fbEl.className = 'save-feedback success';
-    setTimeout(() => {
-      fbEl.innerHTML = '';
-      fbEl.className = 'save-feedback';
-    }, 2500);
+    fb.innerHTML = '✅ 保存しました'; fb.className = 'status-fb success';
+    setTimeout(() => { fb.innerHTML=''; fb.className='status-fb'; }, 2500);
     showToast(`「${newStatus}」に変更しました`);
   }
 }
 
-// ════════════════════════════════════════
-//  議事録・要約の保存
-// ════════════════════════════════════════
-async function saveMinutes(proposalId) {
-  const bodyEl    = document.getElementById(`minutes-body-${proposalId}`);
-  const summaryEl = document.getElementById(`minutes-summary-${proposalId}`);
-  const gdocEl    = document.getElementById(`minutes-gdoc-${proposalId}`);
-  const btnEl     = document.getElementById(`msbtn-${proposalId}`);
-  const fbEl      = document.getElementById(`msfb-${proposalId}`);
-
-  const minutesValue = bodyEl.value;
-  const summaryValue = summaryEl.value;
-  const gdocValue    = gdocEl.value.trim();
-
-  // フィードバック：保存中
-  btnEl.disabled    = true;
-  fbEl.innerHTML    = '<span class="save-spinner"></span> 保存中…';
-  fbEl.className    = 'minutes-save-fb saving';
-
-  const { error } = await db
-    .from('proposals')
-    .update({
-      minutes:    minutesValue,
-      summary:    summaryValue,
-      gdoc_url:   gdocValue,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', proposalId);
-
-  btnEl.disabled = false;
-
+// ─── 議事録保存 ───
+async function saveMinutes(id) {
+  const btn = document.getElementById(`msbtn-${id}`);
+  const fb  = document.getElementById(`msfb-${id}`);
+  btn.disabled = true;
+  fb.innerHTML = '<span class="sp"></span> 保存中…'; fb.className = 'minutes-save-fb saving';
+  const { error } = await db.from('proposals').update({
+    minutes:    document.getElementById(`mbody-${id}`).value,
+    summary:    document.getElementById(`msum-${id}`).value,
+    gdoc_url:   document.getElementById(`mgdoc-${id}`).value.trim(),
+    updated_at: new Date().toISOString(),
+  }).eq('id', id);
+  btn.disabled = false;
   if (error) {
-    fbEl.innerHTML = '❌ 保存に失敗しました。';
-    fbEl.className = 'minutes-save-fb error';
-    showToast('議事録の保存に失敗しました。');
+    fb.innerHTML = '❌ 失敗しました'; fb.className = 'minutes-save-fb error';
   } else {
-    fbEl.innerHTML = '✅ 保存しました';
-    fbEl.className = 'minutes-save-fb success';
-    setTimeout(() => {
-      fbEl.innerHTML = '';
-      fbEl.className = 'minutes-save-fb';
-    }, 3000);
+    fb.innerHTML = '✅ 保存しました'; fb.className = 'minutes-save-fb success';
+    setTimeout(() => { fb.innerHTML=''; fb.className='minutes-save-fb'; }, 3000);
     showToast('議事録を保存しました');
   }
 }
 
-// ════════════════════════════════════════
-//  議案作成フォーム
-// ════════════════════════════════════════
-function toggleCreateForm() {
-  const body    = document.getElementById('create-form-body');
-  const chevron = document.getElementById('create-chevron');
-  const isOpen  = body.classList.contains('open');
-  body.classList.toggle('open', !isOpen);
-  chevron.classList.toggle('open', !isOpen);
-}
-
-async function createProposal() {
-  const titleEl = document.getElementById('new-title');
-  const descEl  = document.getElementById('new-desc');
-  const btnEl   = document.getElementById('create-submit-btn');
-  const fbEl    = document.getElementById('create-fb');
-  const title   = titleEl.value.trim();
-  if (!title) { titleEl.focus(); return; }
-
-  btnEl.disabled = true; btnEl.textContent = '作成中…';
-  fbEl.className = 'create-fb';
-
-  const itemId = typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : Date.now().toString(36) + Math.random().toString(36).slice(2);
-
-  const { error } = await db.from('proposals').insert({
-    item_id: itemId, title, description: descEl.value.trim(),
-    status: '提案中', is_published: true,
-  });
-
-  btnEl.disabled = false; btnEl.textContent = '作成する';
-
-  if (error) {
-    fbEl.textContent = '❌ 作成に失敗しました: ' + error.message;
-    fbEl.className = 'create-fb error';
-    return;
-  }
-
-  fbEl.textContent = '✅ 作成しました';
-  fbEl.className = 'create-fb success';
-  titleEl.value = ''; descEl.value = '';
-  setTimeout(() => { fbEl.textContent = ''; fbEl.className = 'create-fb'; }, 3000);
-  fetchProposals();
-}
-
-// ════════════════════════════════════════
-//  公開 / 非公開
-// ════════════════════════════════════════
-async function togglePublish(proposalId, btn) {
-  const isPublished = btn.classList.contains('published');
-  const newValue    = !isPublished;
+// ─── 公開・非公開 ───
+async function togglePublish(id, btn) {
+  const nowPublished = btn.classList.contains('published');
+  const next = !nowPublished;
   btn.disabled = true;
-
   const { error } = await db.from('proposals')
-    .update({ is_published: newValue, updated_at: new Date().toISOString() })
-    .eq('id', proposalId);
-
+    .update({ is_published: next, updated_at: new Date().toISOString() }).eq('id', id);
   btn.disabled = false;
   if (error) { showToast('更新に失敗しました。'); return; }
-
-  if (newValue) {
-    btn.className = 'action-btn published'; btn.textContent = '👁 公開中';
-  } else {
-    btn.className = 'action-btn unpublished'; btn.textContent = '🚫 非公開';
-  }
-  showToast(newValue ? '議案を公開しました' : '議案を非公開にしました');
+  btn.className  = `action-btn ${next ? 'published' : 'unpublished'}`;
+  btn.textContent = next ? '👁 公開中' : '🚫 非公開';
+  showToast(next ? '議案を公開しました' : '議案を非公開にしました');
 }
 
-// ════════════════════════════════════════
-//  削除
-// ════════════════════════════════════════
-async function deleteProposal(proposalId) {
-  const card  = document.querySelector(`.proposal-card[data-proposal-id="${proposalId}"]`);
-  const title = card?.querySelector('.proposal-card-title')?.textContent || 'この議案';
+// ─── 削除 ───
+async function deleteProposal(id) {
+  const card  = document.querySelector(`.proposal-card[data-id="${id}"]`);
+  const title = card?.querySelector('.pc-title')?.textContent || 'この議案';
   if (!confirm(`「${title}」を削除しますか？\nこの操作は元に戻せません。`)) return;
-
-  const { error } = await db.from('proposals').delete().eq('id', proposalId);
+  const { error } = await db.from('proposals').delete().eq('id', id);
   if (error) { showToast('削除に失敗しました: ' + error.message); return; }
   card?.remove();
   showToast('削除しました');
 }
 
-// ════════════════════════════════════════
-//  インライン編集
-// ════════════════════════════════════════
-function startEditProposal(proposalId) {
-  document.getElementById(`edit-form-${proposalId}`).style.display = 'block';
+// ─── インライン編集 ───
+function startEdit(id) {
+  document.getElementById(`iedit-${id}`).style.display = 'block';
 }
-function cancelEditProposal(proposalId) {
-  document.getElementById(`edit-form-${proposalId}`).style.display = 'none';
+function cancelEdit(id) {
+  document.getElementById(`iedit-${id}`).style.display = 'none';
 }
-async function saveEditProposal(proposalId) {
-  const titleEl = document.getElementById(`edit-title-${proposalId}`);
-  const descEl  = document.getElementById(`edit-desc-${proposalId}`);
-  const saveBtn = document.getElementById(`edit-save-${proposalId}`);
+async function saveEdit(id) {
+  const titleEl = document.getElementById(`ietitle-${id}`);
+  const descEl  = document.getElementById(`iedesc-${id}`);
+  const saveBtn = document.getElementById(`iesave-${id}`);
   const newTitle = titleEl.value.trim();
   if (!newTitle) { titleEl.focus(); return; }
-
   saveBtn.disabled = true; saveBtn.textContent = '保存中…';
-
   const { error } = await db.from('proposals')
     .update({ title: newTitle, description: descEl.value.trim(), updated_at: new Date().toISOString() })
-    .eq('id', proposalId);
-
+    .eq('id', id);
   saveBtn.disabled = false; saveBtn.textContent = '変更を保存';
   if (error) { showToast('編集に失敗しました。'); return; }
-
-  const card = document.querySelector(`.proposal-card[data-proposal-id="${proposalId}"]`);
-  if (card) card.querySelector('.proposal-card-title').textContent = newTitle;
-  document.getElementById(`edit-form-${proposalId}`).style.display = 'none';
+  const card = document.querySelector(`.proposal-card[data-id="${id}"]`);
+  if (card) card.querySelector('.pc-title').textContent = newTitle;
+  document.getElementById(`iedit-${id}`).style.display = 'none';
   showToast('変更を保存しました');
 }
 
-// ════════════════════════════════════════
-//  アコーディオン開閉
-// ════════════════════════════════════════
-function toggleAdminCard(card) {
-  card.classList.toggle('open');
+// ─── 新規作成 ───
+function toggleCreate() {
+  const body    = document.getElementById('create-body');
+  const chevron = document.getElementById('create-chevron');
+  const open    = body.classList.toggle('open');
+  chevron.classList.toggle('open', open);
+}
+async function createProposal() {
+  const titleEl = document.getElementById('new-title');
+  const descEl  = document.getElementById('new-desc');
+  const btn     = document.getElementById('create-btn');
+  const fb      = document.getElementById('create-fb');
+  const title   = titleEl.value.trim();
+  if (!title) { titleEl.focus(); return; }
+  btn.disabled = true; btn.textContent = '作成中…'; fb.className = 'create-fb';
+  const itemId = typeof crypto.randomUUID==='function'
+    ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2);
+  const { error } = await db.from('proposals').insert({
+    item_id: itemId, title, description: descEl.value.trim(),
+    status: '提案中', is_published: true,
+  });
+  btn.disabled = false; btn.textContent = '作成する';
+  if (error) {
+    fb.textContent = '❌ 作成に失敗しました: ' + error.message; fb.className = 'create-fb err';
+    return;
+  }
+  fb.textContent = '✅ 作成しました'; fb.className = 'create-fb ok';
+  titleEl.value = ''; descEl.value = '';
+  setTimeout(() => { fb.textContent=''; fb.className='create-fb'; }, 3000);
+  fetchProposals();
 }
 
-// ════════════════════════════════════════
-//  ユーティリティ
-// ════════════════════════════════════════
+// ─── ユーティリティ ───
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2800);
 }
-
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ════════════════════════════════════════
-//  初期化
-// ════════════════════════════════════════
 init();
 </script>
 </body>
