@@ -447,17 +447,6 @@ function createCard(p) {
 // ════════ セクション配置 ════════
 function placeCard(p) {
   const existing = document.querySelector(`.card[data-item-id="${p.item_id}"]`);
-  // 非公開になったカードを取り除く
-  if (p.is_published === false) {
-    if (existing) {
-      existing.remove();
-      delete loadedItems[p.item_id];
-      if (commentSubs[p.item_id]) { supabase.removeChannel(commentSubs[p.item_id]); delete commentSubs[p.item_id]; }
-      delete proposalData[p.item_id];
-    }
-    updateEmptyStates();
-    return;
-  }
   proposalData[p.item_id] = p;
   const cfg = STATUS_CFG[p.status] || STATUS_CFG['提案中'];
   if (existing) {
@@ -488,7 +477,6 @@ function updateEmptyStates() {
 // ════════ データ取得 ════════
 async function fetchProposals() {
   const { data, error } = await db.from('proposals').select('*')
-    .eq('is_published', true)
     .order('sort_order',{ascending:true}).order('created_at',{ascending:true});
   if (error) { console.error(error); ['active-loading','proposals-loading'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='読み込みに失敗しました。';}); return; }
   (data||[]).forEach(placeCard);
