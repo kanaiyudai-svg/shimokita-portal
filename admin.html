@@ -10,14 +10,19 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --ink:   #111111;
-    --ink-2: #3a3a3a;
-    --mute:  #6f6f6f;
-    --faint: #a3a3a3;
-    --line:  #d6d6d6;
-    --line-2:#ebebeb;
-    --tint:  #f5f5f5;
-    --paper: #ffffff;
+    --ink:   #2b2722;
+    --ink-2: #4a443c;
+    --mute:  #7b7367;
+    --faint: #aaa194;
+    --line:  #ddd4c4;
+    --line-2:#ebe4d6;
+    --tint:  #efe8d9;
+    --paper: #f8f4eb;
+    --white: #fffdf8;
+    --moss:  #4d6b53; --moss-bg:  #e2e9dc; --moss-line:  #b9cab5;
+    --ochre: #94702a; --ochre-bg: #f2e7cc; --ochre-line: #dcc68f;
+    --slate: #4c6179; --slate-bg: #e0e6ec; --slate-line: #b7c3d0;
+    --clay:  #a0553f;
     --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Segoe UI', sans-serif;
     --serif: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Segoe UI', sans-serif;
   }
@@ -41,18 +46,18 @@
   .label { display: block; font-size: 11px; letter-spacing: 0; color: var(--mute); margin-bottom: 2px; }
   .btn {
     font-size: 13px; font-weight: 500; letter-spacing: 0; padding: 8px 18px;
-    border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
+    border: 1px solid var(--ink); background: var(--ink); color: var(--white);
     transition: background .15s, color .15s; white-space: nowrap;
   }
   .btn:hover { background: var(--paper); color: var(--ink); }
-  .btn:disabled { background: var(--line); border-color: var(--line); color: var(--paper); cursor: default; }
+  .btn:disabled { background: var(--line); border-color: var(--line); color: var(--white); cursor: default; }
   .btn.ghost { background: var(--paper); color: var(--ink); }
-  .btn.ghost:hover { background: var(--ink); color: var(--paper); }
+  .btn.ghost:hover { background: var(--ink); color: var(--white); }
   .link { font-size: 12px; color: var(--mute); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
   .link:hover { color: var(--ink); text-decoration-color: var(--ink); }
-  .link.danger:hover { color: var(--ink); font-weight: 700; }
+  .link.danger:hover { color: var(--clay); text-decoration-color: var(--clay); }
   .fb { font-size: 12px; color: var(--mute); min-height: 18px; }
-  .fb.err { color: var(--ink); font-weight: 700; }
+  .fb.err { color: var(--clay); font-weight: 700; }
 
   /* ─── ログイン ─── */
   #login-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -115,11 +120,11 @@
   .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; font-size: 12px; color: var(--mute); }
   .meta time { font-variant-numeric: tabular-nums; }
   .status { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0; padding: 2px 8px; line-height: 1.6; border: 1px solid var(--ink); }
-  .s-active   { background: var(--ink); color: var(--paper); }
-  .s-adopted  { background: var(--paper); color: var(--ink); }
-  .s-pending  { border-color: var(--faint); color: var(--mute); }
-  .s-resolved { border-color: transparent; background: var(--tint); color: var(--ink-2); }
-  .hidden-tag { font-size: 11px; letter-spacing: 0; color: var(--mute); border: 1px dashed var(--faint); padding: 1px 7px; }
+  .s-active   { background: var(--moss); border-color: var(--moss); color: var(--white); }
+  .s-adopted  { background: var(--ochre-bg); border-color: var(--ochre-line); color: var(--ochre); }
+  .s-pending  { border-color: var(--line); color: var(--mute); }
+  .s-resolved { background: var(--slate-bg); border-color: var(--slate-line); color: var(--slate); }
+  .hidden-tag { font-size: 11px; letter-spacing: 0; color: var(--clay); border: 1px dashed var(--clay); padding: 1px 7px; }
 
   .pc-body { display: none; padding: 0 0 28px 60px; }
   .proposal-card.open .pc-body { display: block; }
@@ -134,7 +139,11 @@
   .seg button { padding: 10px 8px; font-size: 13px; border-right: 1px solid var(--ink); transition: background .15s, color .15s; }
   .seg button:last-child { border-right: none; }
   .seg button:hover { background: var(--tint); }
-  .seg button.selected { background: var(--ink); color: var(--paper); font-weight: 700; }
+  .seg button.selected { background: var(--ink); color: var(--white); font-weight: 700; }
+  .seg button.selected[data-key="提案中"]      { background: var(--mute); }
+  .seg button.selected[data-key="取り上げ確定"] { background: var(--ochre); }
+  .seg button.selected[data-key="議論中"]      { background: var(--moss); }
+  .seg button.selected[data-key="決議済み"]    { background: var(--slate); }
   .seg button:disabled { cursor: default; }
   .seg-note { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 12px; color: var(--faint); }
 
@@ -145,7 +154,7 @@
   .pub { display: flex; align-items: center; gap: 12px; font-size: 13px; }
   .switch { width: 40px; height: 22px; border: 1px solid var(--ink); position: relative; transition: background .15s; flex-shrink: 0; }
   .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; background: var(--ink); transition: transform .15s, background .15s; }
-  .switch.on { background: var(--ink); }
+  .switch.on { background: var(--moss); border-color: var(--moss); }
   .switch.on::after { transform: translateX(18px); background: var(--paper); }
   .actions .right { display: flex; gap: 18px; }
 
@@ -159,7 +168,7 @@
 
   #toast {
     position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 8px);
-    background: var(--ink); color: var(--paper); font-size: 13px; padding: 10px 20px;
+    background: var(--ink); color: var(--white); font-size: 13px; padding: 10px 20px;
     z-index: 300; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100vw - 32px);
   }
   #toast.show { opacity: 1; transform: translate(-50%, 0); }

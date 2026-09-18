@@ -10,14 +10,19 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --ink:   #111111;
-    --ink-2: #3a3a3a;
-    --mute:  #6f6f6f;
-    --faint: #a3a3a3;
-    --line:  #d6d6d6;
-    --line-2:#ebebeb;
-    --tint:  #f5f5f5;
-    --paper: #ffffff;
+    --ink:   #2b2722;
+    --ink-2: #4a443c;
+    --mute:  #7b7367;
+    --faint: #aaa194;
+    --line:  #ddd4c4;
+    --line-2:#ebe4d6;
+    --tint:  #efe8d9;
+    --paper: #f8f4eb;
+    --white: #fffdf8;
+    --moss:  #4d6b53; --moss-bg:  #e2e9dc; --moss-line:  #b9cab5;
+    --ochre: #94702a; --ochre-bg: #f2e7cc; --ochre-line: #dcc68f;
+    --slate: #4c6179; --slate-bg: #e0e6ec; --slate-line: #b7c3d0;
+    --clay:  #a0553f;
     --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Segoe UI', sans-serif;
     --serif: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Segoe UI', sans-serif;
     --wrap: 880px;
@@ -99,24 +104,26 @@
   .toggle::after { transform: rotate(90deg); }
   .card.open .toggle::after { transform: rotate(0deg); }
 
-  /* 状態ラベル（色でなく塗り・枠・濃淡で区別） */
+  /* 状態ラベル */
   .status {
     display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0;
     padding: 2px 8px; line-height: 1.6; border: 1px solid var(--ink);
   }
-  .s-active   { background: var(--ink); color: var(--paper); }
-  .s-adopted  { background: var(--paper); color: var(--ink); }
-  .s-pending  { border-color: var(--faint); color: var(--mute); }
-  .s-resolved { border-color: transparent; background: var(--tint); color: var(--ink-2); }
-  .adopted-note { font-size: 12px; color: var(--ink); font-weight: 500; }
+  .s-active   { background: var(--moss); border-color: var(--moss); color: var(--white); }
+  .s-adopted  { background: var(--ochre-bg); border-color: var(--ochre-line); color: var(--ochre); }
+  .s-pending  { border-color: var(--line); color: var(--mute); }
+  .s-resolved { background: var(--slate-bg); border-color: var(--slate-line); color: var(--slate); }
+  .adopted-note { font-size: 12px; color: var(--ochre); font-weight: 500; }
   .adopted-note::before { content: '— '; color: var(--faint); }
 
   .minutes-btn {
     font-size: 12px; font-weight: 500; letter-spacing: 0;
-    padding: 5px 12px; border: 1px solid var(--ink); transition: background .15s, color .15s;
-    white-space: nowrap;
+    padding: 5px 12px; border: 1px solid var(--moss-line); background: var(--moss-bg); color: var(--moss);
+    transition: background .15s, color .15s, border-color .15s; white-space: nowrap;
   }
-  .minutes-btn:hover { background: var(--ink); color: var(--paper); }
+  .minutes-btn:hover { background: var(--moss); border-color: var(--moss); color: var(--white); }
+  .minutes-btn.resolved { border-color: var(--slate-line); background: var(--slate-bg); color: var(--slate); }
+  .minutes-btn.resolved:hover { background: var(--slate); border-color: var(--slate); color: var(--white); }
 
   /* ─── 展開部 ─── */
   .card-body { display: none; padding: 0 0 28px 60px; }
@@ -127,7 +134,7 @@
     border-bottom: 2px solid transparent; transition: color .15s;
   }
   .tab:hover { color: var(--ink); }
-  .tab.active { color: var(--ink); font-weight: 700; border-color: var(--ink); }
+  .tab.active { color: var(--ink); font-weight: 700; border-color: var(--moss); }
   .tab .tc { font-weight: 400; color: var(--faint); margin-left: 4px; font-variant-numeric: tabular-nums; }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
@@ -136,22 +143,22 @@
   .prose.empty { color: var(--faint); }
   .resolved-banner {
     font-size: 13px; color: var(--ink); padding: 10px 14px; margin-bottom: 18px;
-    background: var(--tint); border-left: 2px solid var(--ink);
+    background: var(--slate-bg); border-left: 2px solid var(--slate); color: var(--slate);
   }
 
   /* スタンプ */
-  .stamps-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); }
+  .stamps-row { background: var(--white); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); }
   .stamp-btn {
     display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
     padding: 12px 14px; border-right: 1px solid var(--line); text-align: left;
     transition: background .15s, color .15s;
   }
   .stamp-btn:last-child { border-right: none; }
-  .stamp-btn:hover { background: var(--tint); }
+  .stamp-btn:hover { background: var(--moss-bg); }
   .stamp-btn .stamp-label { font-size: 12px; color: var(--ink-2); }
   .stamp-btn .stamp-count { font-size: 22px; font-weight: 500; line-height: 1.3; font-variant-numeric: tabular-nums; }
-  .stamp-btn.reacted { background: var(--ink); color: var(--paper); }
-  .stamp-btn.reacted .stamp-label { color: var(--paper); }
+  .stamp-btn.reacted { background: var(--moss); color: var(--white); }
+  .stamp-btn.reacted .stamp-label { color: var(--white); }
   .stamp-btn:disabled { cursor: default; opacity: .7; }
   .stamp-count.loading { color: var(--line); }
   .stamp-hint { font-size: 12px; color: var(--faint); margin-top: 10px; }
@@ -183,13 +190,13 @@
   .compose label { display: block; font-size: 11px; letter-spacing: 0; color: var(--mute); }
   .btn {
     font-size: 13px; font-weight: 500; letter-spacing: 0;
-    padding: 8px 18px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
+    padding: 8px 18px; border: 1px solid var(--ink); background: var(--ink); color: var(--white);
     transition: background .15s, color .15s; white-space: nowrap;
   }
   .btn:hover { background: var(--paper); color: var(--ink); }
-  .btn:disabled { background: var(--line); border-color: var(--line); color: var(--paper); cursor: default; }
+  .btn:disabled { background: var(--line); border-color: var(--line); color: var(--white); cursor: default; }
   .btn.ghost { background: var(--paper); color: var(--ink); }
-  .btn.ghost:hover { background: var(--ink); color: var(--paper); }
+  .btn.ghost:hover { background: var(--ink); color: var(--white); }
   .edit-actions { display: flex; gap: 8px; margin-top: 10px; }
 
   .db-notice {
@@ -238,7 +245,7 @@
   /* ─── トースト・フッター ─── */
   #toast {
     position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 8px);
-    background: var(--ink); color: var(--paper); font-size: 13px; padding: 10px 20px;
+    background: var(--ink); color: var(--white); font-size: 13px; padding: 10px 20px;
     z-index: 300; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
     max-width: calc(100vw - 32px);
   }
@@ -422,7 +429,7 @@ function createCard(p) {
         </div>
       </div>
       <div class="row-side">
-        ${hasMinutes ? `<button class="minutes-btn" onclick="openMinutesModal(event,'${id}')">議事録</button>` : ''}
+        ${hasMinutes ? `<button class="minutes-btn${p.status === '決議済み' ? ' resolved' : ''}" onclick="openMinutesModal(event,'${id}')">議事録</button>` : ''}
         <span class="toggle" aria-hidden="true"></span>
       </div>
     </div>
