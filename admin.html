@@ -6,7 +6,7 @@
 <title>管理 | 全体会議ポータル</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -18,12 +18,12 @@
     --line-2:#ebebeb;
     --tint:  #f5f5f5;
     --paper: #ffffff;
-    --sans: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
-    --serif: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Segoe UI', sans-serif;
+    --serif: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Segoe UI', sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: var(--sans); font-size: 15px; line-height: 1.75;
+    font-family: var(--sans); font-size: 16px; line-height: 1.7; letter-spacing: .01em;
     color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased;
   }
   button, input, textarea { font: inherit; color: inherit; }
@@ -38,9 +38,9 @@
   }
   .field:focus { border-color: var(--ink); }
   textarea.field { resize: vertical; line-height: 1.85; }
-  .label { display: block; font-size: 11px; letter-spacing: .08em; color: var(--mute); margin-bottom: 2px; }
+  .label { display: block; font-size: 11px; letter-spacing: 0; color: var(--mute); margin-bottom: 2px; }
   .btn {
-    font-size: 13px; font-weight: 500; letter-spacing: .06em; padding: 8px 18px;
+    font-size: 13px; font-weight: 500; letter-spacing: 0; padding: 8px 18px;
     border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
     transition: background .15s, color .15s; white-space: nowrap;
   }
@@ -57,8 +57,8 @@
   /* ─── ログイン ─── */
   #login-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
   .login { width: 100%; max-width: 360px; }
-  .login .org { font-size: 12px; letter-spacing: .12em; color: var(--mute); text-transform: uppercase; padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
-  .login h1 { font-family: var(--serif); font-size: 26px; font-weight: 700; letter-spacing: .06em; margin: 22px 0 4px; }
+  .login .org { font-size: 12px; letter-spacing: 0; color: var(--mute); text-transform: uppercase; padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
+  .login h1 { font-family: var(--serif); font-size: 28px; font-weight: 700; letter-spacing: -.01em; margin: 22px 0 4px; }
   .login p { font-size: 13px; color: var(--mute); margin-bottom: 28px; }
   .login .row { margin-bottom: 18px; }
   .login .btn { width: 100%; padding: 11px; margin-top: 8px; }
@@ -70,18 +70,18 @@
   #admin-section { display: none; }
   .bar { border-bottom: 1px solid var(--ink); position: sticky; top: 0; background: var(--paper); z-index: 50; }
   .bar .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 16px; }
-  .bar .brand { font-size: 13px; font-weight: 700; letter-spacing: .06em; }
+  .bar .brand { font-size: 13px; font-weight: 700; letter-spacing: 0; }
   .bar .brand span { font-weight: 400; color: var(--mute); margin-left: 10px; }
   .bar .right { display: flex; align-items: center; gap: 18px; font-size: 12px; color: var(--mute); }
 
   .head { padding: 40px 0 0; }
-  .head h1 { font-family: var(--serif); font-size: 28px; font-weight: 700; letter-spacing: .05em; }
+  .head h1 { font-family: var(--serif); font-size: 32px; font-weight: 700; letter-spacing: -.01em; }
   .head p { font-size: 13px; color: var(--mute); margin-top: 4px; }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 28px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   .stat { padding: 14px 16px; border-right: 1px solid var(--line); }
   .stat:first-child { padding-left: 0; }
   .stat:last-child { border-right: none; }
-  .stat .k { font-size: 11px; letter-spacing: .08em; color: var(--mute); }
+  .stat .k { font-size: 11px; letter-spacing: 0; color: var(--mute); }
   .stat .v { font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.4; }
 
   .admin-error { display: none; margin-top: 20px; font-size: 13px; padding: 10px 14px; background: var(--tint); border-left: 2px solid var(--ink); }
@@ -90,7 +90,7 @@
   /* 新規作成 */
   .create { margin-top: 36px; border: 1px solid var(--ink); }
   .create-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; text-align: left; }
-  .create-toggle span { font-size: 14px; font-weight: 700; letter-spacing: .04em; }
+  .create-toggle span { font-size: 14px; font-weight: 700; letter-spacing: 0; }
   .create-body { display: none; padding: 4px 20px 20px; border-top: 1px solid var(--line); }
   .create.open .create-body { display: block; }
   .create-body .f { margin-top: 16px; }
@@ -103,7 +103,7 @@
 
   /* 議案リスト */
   .list-head { display: flex; align-items: baseline; gap: 14px; margin-top: 48px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
-  .list-head h2 { font-family: var(--serif); font-size: 20px; font-weight: 700; letter-spacing: .05em; }
+  .list-head h2 { font-family: var(--serif); font-size: 22px; font-weight: 700; letter-spacing: -.005em; }
   .list-head span { margin-left: auto; font-size: 12px; color: var(--mute); }
   .proposals-list { counter-reset: item; }
   .proposal-card { border-bottom: 1px solid var(--line); counter-increment: item; scroll-margin-top: 64px; }
@@ -111,21 +111,21 @@
   .pc-header:hover .pc-title { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
   .idx { font-size: 13px; color: var(--faint); padding-top: 3px; font-variant-numeric: tabular-nums; }
   .idx::before { content: counter(item, decimal-leading-zero); }
-  .pc-title { font-size: 17px; font-weight: 700; line-height: 1.55; }
+  .pc-title { font-size: 17px; font-weight: 600; line-height: 1.5; }
   .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; font-size: 12px; color: var(--mute); }
   .meta time { font-variant-numeric: tabular-nums; }
-  .status { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 2px 8px; line-height: 1.6; border: 1px solid var(--ink); }
+  .status { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0; padding: 2px 8px; line-height: 1.6; border: 1px solid var(--ink); }
   .s-active   { background: var(--ink); color: var(--paper); }
   .s-adopted  { background: var(--paper); color: var(--ink); }
   .s-pending  { border-color: var(--faint); color: var(--mute); }
   .s-resolved { border-color: transparent; background: var(--tint); color: var(--ink-2); }
-  .hidden-tag { font-size: 11px; letter-spacing: .06em; color: var(--mute); border: 1px dashed var(--faint); padding: 1px 7px; }
+  .hidden-tag { font-size: 11px; letter-spacing: 0; color: var(--mute); border: 1px dashed var(--faint); padding: 1px 7px; }
 
   .pc-body { display: none; padding: 0 0 28px 60px; }
   .proposal-card.open .pc-body { display: block; }
   .block { padding: 20px 0; border-top: 1px solid var(--line-2); }
   .block:first-child { border-top: none; padding-top: 0; }
-  .block-title { font-size: 11px; letter-spacing: .1em; color: var(--mute); margin-bottom: 10px; }
+  .block-title { font-size: 11px; letter-spacing: 0; color: var(--mute); margin-bottom: 10px; }
   .prose { font-size: 14px; line-height: 1.9; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
   .prose.empty { color: var(--faint); }
 
