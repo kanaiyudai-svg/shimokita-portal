@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>全体会議ポータル | Shimokita College</title>
+<title>みんカレポータル | Shimokita College</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -41,9 +41,10 @@
   .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 24px; }
 
   /* ─── 表題 ─── */
-  .mast { border-bottom: 1px solid var(--ink); padding: 40px 0 0; }
+  .mast { border-bottom: 1px solid var(--ink); padding: 40px 0 32px; }
+  .mast .wrap { max-width: none; margin-left: 0; }
   .mast-top {
-    display: flex; justify-content: space-between; align-items: baseline;
+    display: flex; align-items: baseline; gap: 16px;
     font-size: 12px; letter-spacing: 0; color: var(--mute);
     padding-bottom: 14px; border-bottom: 1px solid var(--line);
   }
@@ -51,22 +52,9 @@
   .mast h1 {
     font-family: var(--serif); font-weight: 700;
     font-size: clamp(34px, 6vw, 56px); letter-spacing: -.01em; line-height: 1.2;
-    margin: 28px 0 10px;
+    margin: 24px 0 10px;
   }
   .lede { color: var(--ink-2); font-size: 14px; max-width: 34em; }
-  .toc { display: flex; margin-top: 32px; border-top: 1px solid var(--line); }
-  .toc a {
-    flex: 1; text-decoration: none; padding: 14px 0 16px;
-    display: flex; align-items: baseline; gap: 10px;
-    border-right: 1px solid var(--line); padding-left: 16px;
-    transition: background .15s;
-  }
-  .toc a:first-child { padding-left: 0; }
-  .toc a:last-child { border-right: none; }
-  .toc a:hover { background: var(--tint); }
-  .toc .n { font-size: 11px; color: var(--faint); letter-spacing: 0; font-variant-numeric: tabular-nums; }
-  .toc .l { font-size: 13px; font-weight: 500; }
-  .toc .c { margin-left: auto; margin-right: 16px; font-size: 13px; color: var(--mute); font-variant-numeric: tabular-nums; }
 
   /* ─── セクション ─── */
   main { padding: 16px 0 96px; }
@@ -267,9 +255,6 @@
   @media (max-width: 640px) {
     .wrap { padding: 0 16px; }
     .mast { padding-top: 28px; }
-    .toc a { flex-direction: column; gap: 0; padding-left: 12px; }
-    .toc a:first-child { padding-left: 0; }
-    .toc .c { margin-left: 0; }
     .row { grid-template-columns: 34px 1fr; }
     .icon { width: 32px; height: 32px; }
     .row-side { grid-column: 2; margin-top: 12px; }
@@ -297,13 +282,8 @@
       <span class="org">Shimokita College</span>
       <span id="today"></span>
     </div>
-    <h1>全体会議ポータル</h1>
+    <h1>みんカレポータル</h1>
     <p class="lede">議案の提案から議論、決議までを居住者全員で共有する場所です。関心のある議案に反応やコメントを残してください。</p>
-    <nav class="toc" aria-label="セクション">
-      <a href="#sec-active"><span class="n">01</span><span class="l">審議中</span><span class="c" id="count-active">-</span></a>
-      <a href="#sec-proposals"><span class="n">02</span><span class="l">提案</span><span class="c" id="count-proposals">-</span></a>
-      <a href="#sec-past"><span class="n">03</span><span class="l">アーカイブ</span><span class="c" id="count-past">-</span></a>
-    </nav>
   </div>
 </header>
 
@@ -518,7 +498,7 @@ function updateEmptyStates() {
   ['active-loading', 'proposals-loading'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
   Object.entries(SECTION_ID).forEach(([sec, cid]) => {
     const n = document.getElementById(cid).querySelectorAll('.card').length;
-    document.getElementById(`count-${sec}`).textContent = n;
+    document.getElementById(`count-${sec}`)?.replaceChildren(String(n));
     const empty = document.getElementById(`${sec}-empty`);
     if (empty && sec !== 'past') empty.style.display = n === 0 ? 'block' : 'none';
   });
