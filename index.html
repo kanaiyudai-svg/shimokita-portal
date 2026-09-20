@@ -81,15 +81,24 @@
   .list { counter-reset: item; }
   .card { border-bottom: 1px solid var(--line); counter-increment: item; }
   .row {
-    display: grid; grid-template-columns: 44px 1fr auto; gap: 0 16px; align-items: start;
+    display: grid; grid-template-columns: 40px 1fr auto; gap: 0 16px; align-items: start;
     padding: 20px 0; cursor: pointer; user-select: none;
   }
   .row:hover .title { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
-  .idx {
-    font-size: 13px; color: var(--faint); padding-top: 3px;
-    font-variant-numeric: tabular-nums; letter-spacing: 0;
-  }
+  .rail { display: flex; flex-direction: column; align-items: center; gap: 5px; padding-top: 2px; }
+  .idx { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
   .idx::before { content: counter(item, decimal-leading-zero); }
+
+  /* 議案アイコン（話し合いのピクトグラム）。色は状態に連動 */
+  .icon { width: 36px; height: 36px; display: block; }
+  .icon .fig { fill: var(--ink-2); }
+  .icon .bub { fill: var(--accent-bg, var(--tint)); stroke: var(--accent, var(--faint)); stroke-width: 2.4; stroke-linejoin: round; }
+  .card[data-status="議論中"]      { --accent: var(--moss);  --accent-bg: var(--moss-bg);  }
+  .card[data-status="取り上げ確定"] { --accent: var(--ochre); --accent-bg: var(--ochre-bg); }
+  .card[data-status="決議済み"]    { --accent: var(--slate); --accent-bg: var(--slate-bg); }
+  .card[data-status="議論中"] .icon .fig,
+  .card[data-status="取り上げ確定"] .icon .fig,
+  .card[data-status="決議済み"] .icon .fig { fill: var(--accent); }
   .title { font-size: 17px; font-weight: 600; line-height: 1.5; letter-spacing: 0; }
   .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; font-size: 12px; color: var(--mute); }
   .meta time { font-variant-numeric: tabular-nums; letter-spacing: 0; }
@@ -261,7 +270,8 @@
     .toc a { flex-direction: column; gap: 0; padding-left: 12px; }
     .toc a:first-child { padding-left: 0; }
     .toc .c { margin-left: 0; }
-    .row { grid-template-columns: 30px 1fr; }
+    .row { grid-template-columns: 34px 1fr; }
+    .icon { width: 32px; height: 32px; }
     .row-side { grid-column: 2; margin-top: 12px; }
     .row-side .toggle { margin-left: auto; }
     .card-body { padding-left: 0; }
@@ -371,6 +381,17 @@ const SUPABASE_URL  = 'https://ggdjoxnjwqthhkwpcvqq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZGpveG5qd3F0aGhrd3BjdnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTYyNjIsImV4cCI6MjA5MzczMjI2Mn0.X1AvGI5I8I94siB6MS1B_ou9TlA5864wUNsuy6SK4bc';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+// 議案アイコン（2人が話し合うピクトグラム）
+const AGENDA_ICON = `
+<svg class="icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+  <path class="bub" d="M8.8 2.6h18.9a5.2 5.2 0 0 1 5.2 5.2v5.4a5.2 5.2 0 0 1-5.2 5.2h-7.4l-6.9 4.4 1.4-4.4H8.8a5.2 5.2 0 0 1-5.2-5.2V7.8a5.2 5.2 0 0 1 5.2-5.2Z"/>
+  <path class="bub" d="M34.4 12.4h7.9a3.8 3.8 0 0 1 3.8 3.8v4.3a3.8 3.8 0 0 1-3.8 3.8h-.5l.9 3.3-4.9-3.3h-3.4a3.8 3.8 0 0 1-3.8-3.8v-4.3a3.8 3.8 0 0 1 3.8-3.8Z"/>
+  <circle class="fig" cx="9.4" cy="30.4" r="5"/>
+  <path class="fig" d="M2.9 46v-5.1a6.5 6.5 0 0 1 13 0V46Z"/>
+  <circle class="fig" cx="38.6" cy="30.4" r="5"/>
+  <path class="fig" d="M32.1 46v-5.1a6.5 6.5 0 0 1 13 0V46Z"/>
+</svg>`;
+
 // reactions.emoji 列にはこのキー文字列がそのまま保存されている
 const STAMPS = ['関心あり', '議論したい', '賛成', '反対', '様子見'];
 
@@ -419,7 +440,7 @@ function createCard(p) {
   el.innerHTML = `
     <div class="row" role="button" tabindex="0" aria-expanded="false"
          onclick="toggleCard(this.parentElement)" onkeydown="rowKey(event,this.parentElement)">
-      <span class="idx"></span>
+      <span class="rail">${AGENDA_ICON}<span class="idx"></span></span>
       <div>
         <h3 class="title">${escHtml(p.title)}</h3>
         <div class="meta">
