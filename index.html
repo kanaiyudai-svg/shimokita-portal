@@ -59,11 +59,10 @@
   /* ─── セクション ─── */
   main { padding: 16px 0 96px; }
   .sec { padding-top: 56px; scroll-margin-top: 8px; }
-  .sec-head { display: flex; align-items: baseline; gap: 14px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
-  .sec-no { font-size: 12px; letter-spacing: 0; color: var(--mute); font-variant-numeric: tabular-nums; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; }
   .sec-head h2 { font-family: var(--serif); font-size: 24px; font-weight: 700; letter-spacing: -.005em; }
   .sec-count { margin-left: auto; font-size: 13px; color: var(--mute); font-variant-numeric: tabular-nums; }
-  .sec-desc { font-size: 13px; color: var(--mute); padding: 10px 0 4px; }
+  .sec-desc { font-size: 13px; color: var(--mute); padding: 6px 0 12px; border-bottom: 2px solid var(--ink); }
 
   /* ─── 議案リスト ─── */
   .list { counter-reset: item; }
@@ -74,8 +73,6 @@
   }
   .row:hover .title { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
   .rail { display: flex; flex-direction: column; align-items: center; gap: 5px; padding-top: 2px; }
-  .idx { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
-  .idx::before { content: counter(item, decimal-leading-zero); }
 
   /* 議案アイコン（話し合いのピクトグラム）。色は状態に連動 */
   .icon { width: 36px; height: 36px; display: block; }
@@ -289,7 +286,7 @@
 
 <main class="wrap">
   <section class="sec" id="sec-active">
-    <div class="sec-head"><span class="sec-no">01</span><h2>審議中の議案</h2></div>
+    <div class="sec-head"><h2>審議中の議案</h2></div>
     <p class="sec-desc">直近の全体会議で取り上げられている議題です。議事録から議論の経過を確認できます。</p>
     <div class="list" id="active-cards">
       <div class="state" id="active-loading">読み込み中</div>
@@ -298,7 +295,7 @@
   </section>
 
   <section class="sec" id="sec-proposals">
-    <div class="sec-head"><span class="sec-no">02</span><h2>居住者からの提案</h2></div>
+    <div class="sec-head"><h2>居住者からの提案</h2></div>
     <p class="sec-desc">反応やコメントで関心を示してください。支持が集まった提案は全体会議の議題になります。</p>
     <div class="list" id="proposals-cards">
       <div class="state" id="proposals-loading">読み込み中</div>
@@ -314,7 +311,7 @@
   </section>
 
   <section class="sec" id="sec-past">
-    <div class="sec-head"><span class="sec-no">03</span><h2>過去の議案</h2></div>
+    <div class="sec-head"><h2>過去の議案</h2></div>
     <p class="sec-desc">これまでの全体会議で決議された議案です。</p>
     <div class="search">
       <label for="past-search">検索</label>
@@ -420,7 +417,7 @@ function createCard(p) {
   el.innerHTML = `
     <div class="row" role="button" tabindex="0" aria-expanded="false"
          onclick="toggleCard(this.parentElement)" onkeydown="rowKey(event,this.parentElement)">
-      <span class="rail">${AGENDA_ICON}<span class="idx"></span></span>
+      <span class="rail">${AGENDA_ICON}</span>
       <div>
         <h3 class="title">${escHtml(p.title)}</h3>
         <div class="meta">
