@@ -13,11 +13,11 @@
 <style>
   /* サイト制作ルールブック準拠。配色は DADS キーカラー（Blue）とセマンティックカラー（@digital-go-jp/design-tokens 2.0.1） */
   :root {
-    --bg: #ffffff; --bg-sub: #f2f2f2; --surface: #ffffff;
-    --text: #1a1a1a; --text-2: #4d4d4d; --text-3: #666666;
-    --border: #767676; --divider: #949494;
-    --primary: #0017c1; --primary-hover: #00118f; --primary-active: #000060; --on-primary: #ffffff;
-    --primary-container: #e8f1fe; --on-primary-container: #00118f;
+    --bg: #ffffff; --bg-sub: #ffffff; --surface: #f3f6fd;
+    --text: #1b1b1f; --text-2: #45474f; --text-3: #5c5f66;
+    --border: #8e919a; --divider: #e1e4ec;
+    --primary: #264af4; --primary-hover: #0031d8; --primary-active: #0017c1; --on-primary: #ffffff;
+    --primary-container: #d9e6ff; --on-primary-container: #0031d8;
     --success: #197a4b; --success-line: #259d63; --success-bg: #e6f5ec;
     --error: #ce0000; --error-line: #ec0000; --error-bg: #fdeeee;
     --focus-a: #000000; --focus-b: #ffd43d;
@@ -201,6 +201,21 @@
     .detail-empty { display: none; }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 1ms !important; } }
+
+  /* 明るい面（MD3の塗りカード風）: 白地に淡い面、濃い枠線を使わない */
+  .item, .stamp, .compose, .sec, .stat, .propose-card, .login { border-color: transparent !important; border-radius: 24px !important; }
+  .item[aria-current="true"] { border-color: var(--primary) !important; }
+  .stamp:hover, .item:hover { background: var(--primary-container); }
+  .field { background: #ffffff; }
+  .btn, .seg { border-radius: var(--r-full) !important; }
+  .views a[aria-current="page"] { border-bottom-width: 3px; }
+  .count-badge { border-color: transparent; background: var(--surface); }
+  .list-pane { border-right-color: var(--divider); }
+  .chip:not(.c-key):not(.c-key-outline):not(.c-success):not(.c-hidden) { background: #ffffff; }
+  #login-section { background: var(--bg); }
+  .appbar, .views { background: var(--bg); }
+  .detail-pane .field, .compose .field { background: #ffffff; }
+  @media (prefers-color-scheme: dark) { .field { background: var(--surface); } .chip:not(.c-key):not(.c-key-outline):not(.c-success):not(.c-hidden) { background: var(--surface); } }
 </style>
 </head>
 <body>

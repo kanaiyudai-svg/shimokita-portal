@@ -12,24 +12,24 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   /*
-   * サイト制作ルールブック準拠。配色はデジタル庁デザインシステムのキーカラー（Blue）と
-   * セマンティックカラーを @digital-go-jp/design-tokens 2.0.1 の値のまま使用。
+   * サイト制作ルールブック準拠。配色は白地＋淡い面（MD3の塗りカード風）。キーカラーは DADS Blue 700、
+   * セマンティックカラーは @digital-go-jp/design-tokens 2.0.1 の値。
    */
   :root {
     --bg: #ffffff;            /* White */
-    --bg-sub: #f2f2f2;        /* Solid Gray 50 */
-    --surface: #ffffff;
-    --text: #1a1a1a;          /* Solid Gray 900 */
-    --text-2: #4d4d4d;        /* Solid Gray 700  7.5:1 */
-    --text-3: #666666;        /* Solid Gray 600  5.1:1 on Gray 50 */
-    --border: #767676;        /* Solid Gray 536  操作部品の枠 */
-    --divider: #949494;       /* Solid Gray 420  区切り線 3:1 */
-    --primary: #0017c1;       /* Blue 900  キーカラー プライマリー */
-    --primary-hover: #00118f; /* Blue 1000 */
-    --primary-active: #000060;/* Blue 1200 */
+    --bg-sub: #ffffff;        /* Solid Gray 50 */
+    --surface: #f3f6fd;
+    --text: #1b1b1f;          /* Solid Gray 900 */
+    --text-2: #45474f;        /* Solid Gray 700  7.5:1 */
+    --text-3: #5c5f66;        /* Solid Gray 600  5.1:1 on Gray 50 */
+    --border: #8e919a;        /* Solid Gray 536  操作部品の枠 */
+    --divider: #e1e4ec;       /* Solid Gray 420  区切り線 3:1 */
+    --primary: #264af4;       /* Blue 900  キーカラー プライマリー */
+    --primary-hover: #0031d8; /* Blue 1000 */
+    --primary-active: #0017c1;/* Blue 1200 */
     --on-primary: #ffffff;
-    --primary-container: #e8f1fe;   /* Blue 50 */
-    --on-primary-container: #00118f;
+    --primary-container: #d9e6ff;   /* Blue 50 */
+    --on-primary-container: #0031d8;
     --secondary: #3460fb;     /* Blue 600  セカンダリー（非テキスト・強調線） */
     --success: #197a4b; --success-line: #259d63; --success-bg: #e6f5ec;  /* Green 800 / 600 / 50 */
     --error: #ce0000;   --error-line: #ec0000;   --error-bg: #fdeeee;    /* Red 900 / 800 / 50 */
@@ -305,6 +305,21 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration: 1ms !important; animation: none !important; }
   }
+
+  /* 明るい面（MD3の塗りカード風）: 白地に淡い面、濃い枠線を使わない */
+  .item, .stamp, .compose, .sec, .stat, .propose-card, .login { border-color: transparent !important; border-radius: 24px !important; }
+  .item[aria-current="true"] { border-color: var(--primary) !important; }
+  .stamp:hover, .item:hover { background: var(--primary-container); }
+  .field { background: #ffffff; }
+  .btn, .seg { border-radius: var(--r-full) !important; }
+  .views a[aria-current="page"] { border-bottom-width: 3px; }
+  .count-badge { border-color: transparent; background: var(--surface); }
+  .list-pane { border-right-color: var(--divider); }
+  .chip:not(.c-key):not(.c-key-outline):not(.c-success):not(.c-hidden) { background: #ffffff; }
+  #login-section { background: var(--bg); }
+  .appbar, .views { background: var(--bg); }
+  .detail-pane .field, .compose .field { background: #ffffff; }
+  @media (prefers-color-scheme: dark) { .field { background: var(--surface); } .chip:not(.c-key):not(.c-key-outline):not(.c-success):not(.c-hidden) { background: var(--surface); } }
 </style>
 </head>
 <body>
