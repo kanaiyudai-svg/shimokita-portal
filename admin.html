@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理 | みんカレポータル</title>
 <meta name="robots" content="noindex">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
@@ -27,18 +27,6 @@
     --r-s: 8px; --r-m: 12px; --r-l: 16px; --r-full: 9999px;
     --ease: cubic-bezier(.2, 0, 0, 1);
     --list-w: 380px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #121212; --bg-sub: #121212; --surface: #1e1e1e;
-      --text: #f2f2f2; --text-2: #cccccc; --text-3: #b3b3b3;
-      --border: #999999; --divider: #7f7f7f;
-      --primary: #9db7f9; --primary-hover: #c5d7fb; --primary-active: #d9e6ff; --on-primary: #000060;
-      --primary-container: #000071; --on-primary-container: #d9e6ff;
-      --success: #71c598; --success-line: #71c598; --success-bg: #0c472a;
-      --error: #ff9696; --error-line: #ff9696; --error-bg: #3b1d1d;
-      --focus-a: #ffd43d; --focus-b: #000000;
-    }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: var(--font); font-size: var(--fs-m); line-height: 1.7; letter-spacing: .02em; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
@@ -215,7 +203,6 @@
   #login-section { background: var(--bg); }
   .appbar, .views { background: var(--bg); }
   .detail-pane .field, .compose .field { background: #ffffff; }
-  @media (prefers-color-scheme: dark) { .field { background: var(--surface); } .chip:not(.c-key):not(.c-key-outline):not(.c-success):not(.c-hidden) { background: var(--surface); } }
 </style>
 </head>
 <body>
