@@ -4,316 +4,306 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>みんカレポータル | Shimokita College</title>
+<meta name="description" content="Shimokita College 全体会議の議案を、提案から議論・決議まで居住者全員で共有するポータル">
 <meta name="color-scheme" content="light dark">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  /* サイト制作ルールブック準拠。配色はこの案件のみ例外（クリーム地＋状態色、本人指示 2026-09-18） */
+  /*
+   * サイト制作ルールブック準拠。配色はデジタル庁デザインシステムのキーカラー（Blue）と
+   * セマンティックカラーを @digital-go-jp/design-tokens 2.0.1 の値のまま使用。
+   */
   :root {
-    --paper:  #f8f4eb;  /* ページ背景 */
-    --white:  #fffdf8;  /* 面 */
-    --tint:   #efe8d9;  /* 一段深い面・ホバー */
-    --ink:    #2b2722;  /* 本文 */
-    --ink-2:  #4a443c;  /* 補助文 8.8:1 */
-    --mute:   #665f55;  /* 注記 5.7:1 */
-    --line:   #8a8173;  /* 操作部品・カードの境界 3.5:1 */
-    --line-2: #e3dccd;  /* 装飾の区切り線 */
-    --on-accent: #fffdf8;
-    --moss:  #4d6b53; --moss-bg:  #e2e9dc;
-    --ochre: #7a5a1c; --ochre-bg: #f2e7cc;
-    --slate: #4c6179; --slate-bg: #e0e6ec;
-    --clay:  #8f4633; --clay-bg:  #f6e6df;
-    --scrim: rgba(28, 24, 20, .32);
-    --focus-in: #2b2722; --focus-out: #fffdf8;
+    --bg: #ffffff;            /* White */
+    --bg-sub: #f2f2f2;        /* Solid Gray 50 */
+    --surface: #ffffff;
+    --text: #1a1a1a;          /* Solid Gray 900 */
+    --text-2: #4d4d4d;        /* Solid Gray 700  7.5:1 */
+    --text-3: #666666;        /* Solid Gray 600  5.1:1 on Gray 50 */
+    --border: #767676;        /* Solid Gray 536  操作部品の枠 */
+    --divider: #949494;       /* Solid Gray 420  区切り線 3:1 */
+    --primary: #0017c1;       /* Blue 900  キーカラー プライマリー */
+    --primary-hover: #00118f; /* Blue 1000 */
+    --primary-active: #000060;/* Blue 1200 */
+    --on-primary: #ffffff;
+    --primary-container: #e8f1fe;   /* Blue 50 */
+    --on-primary-container: #00118f;
+    --secondary: #3460fb;     /* Blue 600  セカンダリー（非テキスト・強調線） */
+    --success: #197a4b; --success-line: #259d63; --success-bg: #e6f5ec;  /* Green 800 / 600 / 50 */
+    --error: #ce0000;   --error-line: #ec0000;   --error-bg: #fdeeee;    /* Red 900 / 800 / 50 */
+    --focus-a: #000000; --focus-b: #ffd43d;  /* フォーカス: 黒＋Yellow 300 の二重 */
+    --scrim: rgba(0, 0, 0, .32);
 
-    --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Segoe UI', sans-serif;
-    --fs-s: .875rem; --fs-m: 1rem; --fs-l: 1.125rem; --fs-h2: 1.5rem; --fs-h1: 2rem;
+    --font: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', Meiryo, sans-serif;
+    --fs-s: .875rem; --fs-m: 1rem; --fs-l: 1.125rem; --fs-xl: 1.25rem; --fs-h2: 1.5rem; --fs-h1: 1.75rem;
     --sp-1: 4px; --sp-2: 8px; --sp-3: 16px; --sp-4: 24px; --sp-5: 32px; --sp-6: 48px;
-    --r-s: 8px; --r-m: 12px; --r-l: 28px;
+    --r-s: 8px; --r-m: 12px; --r-l: 16px; --r-xl: 28px; --r-full: 9999px;
     --ease: cubic-bezier(.2, 0, 0, 1);
-    --wrap: 880px;
+    --ease-in: cubic-bezier(0, 0, 0, 1);
+    --list-w: 400px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --paper: #1c1a17; --white: #25221e; --tint: #2e2a25;
-      --ink: #f1ece2; --ink-2: #d6cfc2; --mute: #b1a898;
-      --line: #7d7568; --line-2: #3a3630; --on-accent: #1c1a17;
-      --moss: #9cc0a3; --moss-bg: #26332a;
-      --ochre: #d9b56a; --ochre-bg: #3a3020;
-      --slate: #a9bdd4; --slate-bg: #263040;
-      --clay: #e3957f; --clay-bg: #3a2620;
-      --scrim: rgba(0, 0, 0, .56);
-      --focus-in: #f1ece2; --focus-out: #1c1a17;
+      --bg: #121212; --bg-sub: #121212; --surface: #1e1e1e;
+      --text: #f2f2f2; --text-2: #cccccc; --text-3: #b3b3b3;
+      --border: #999999; --divider: #7f7f7f;
+      --primary: #9db7f9; --primary-hover: #c5d7fb; --primary-active: #d9e6ff; --on-primary: #000060;
+      --primary-container: #000071; --on-primary-container: #d9e6ff;
+      --secondary: #7096f8;
+      --success: #71c598; --success-line: #71c598; --success-bg: #0c472a;
+      --error: #ff9696; --error-line: #ff9696; --error-bg: #3b1d1d;
+      --focus-a: #ffd43d; --focus-b: #000000;
+      --scrim: rgba(0, 0, 0, .6);
     }
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
-    font-family: var(--sans); font-size: var(--fs-m); line-height: 1.7; letter-spacing: .02em;
-    color: var(--ink); background: var(--paper);
-    -webkit-font-smoothing: antialiased;
+    font-family: var(--font); font-size: var(--fs-m); line-height: 1.7; letter-spacing: .02em;
+    color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased;
   }
   button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
   button { cursor: pointer; background: none; border: none; }
-  a { color: inherit; text-underline-offset: 3px; }
-  :focus-visible { outline: 2px solid var(--focus-in); outline-offset: 2px; box-shadow: 0 0 0 5px var(--focus-out); }
+  a { color: var(--primary); text-underline-offset: 3px; }
+  a:hover { color: var(--primary-hover); text-decoration-thickness: 2px; }
+  ul { list-style: none; }
+  :focus-visible { outline: 2px solid var(--focus-a); outline-offset: 2px; box-shadow: 0 0 0 4px var(--focus-b); }
   [hidden] { display: none !important; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .ic { width: 1.25em; height: 1.25em; flex-shrink: 0; }
-  .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 var(--sp-4); }
+  .skip { position: absolute; left: var(--sp-3); top: -100px; z-index: 500; background: var(--primary); color: var(--on-primary); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-s); }
+  .skip:focus { top: var(--sp-2); color: var(--on-primary); }
 
-  .skip { position: absolute; left: var(--sp-3); top: -100px; background: var(--ink); color: var(--paper); padding: var(--sp-2) var(--sp-3); z-index: 400; }
-  .skip:focus { top: var(--sp-2); }
-
-  /* ─── 表題 ─── */
-  .mast { padding: var(--sp-5) 0 var(--sp-2); }
-  .mast-top { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); font-size: var(--fs-s); color: var(--mute); }
-  .mast-top time { font-variant-numeric: tabular-nums; }
-  .mast h1 { font-size: clamp(1.5rem, 3.2vw, var(--fs-h1)); font-weight: 700; line-height: 1.4; letter-spacing: .01em; margin: var(--sp-3) 0 var(--sp-2); }
-  .lede { color: var(--ink-2); max-width: 40em; }
-
-  /* ─── セクション ─── */
-  main { padding-bottom: 96px; }
-  .sec { padding-top: var(--sp-6); scroll-margin-top: var(--sp-2); }
-  .sec h2 { font-size: var(--fs-h2); font-weight: 700; line-height: 1.4; letter-spacing: .01em; }
-  .sec-desc { color: var(--mute); padding: var(--sp-1) 0 var(--sp-3); border-bottom: 2px solid var(--ink); max-width: none; }
-
-  /* ─── 議案リスト ─── */
-  .card { border-bottom: 1px solid var(--line-2); }
-  .row {
-    display: grid; grid-template-columns: 40px 1fr auto; gap: 0 var(--sp-3); align-items: start;
-    padding: var(--sp-4) 0 var(--sp-3); cursor: pointer;
-  }
-  .rail { padding-top: 2px; }
-  .row-toggle {
-    display: block; width: 100%; text-align: left; min-height: 44px;
-    font-size: var(--fs-l); font-weight: 700; line-height: 1.5; letter-spacing: .01em;
-  }
-  .row:hover .row-toggle { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
-
-  /* 議案アイコン（2人が話し合うピクトグラム）。色は状態に連動 */
-  .icon { width: 36px; height: 36px; display: block; }
-  .icon .fig { fill: var(--ink-2); }
-  .icon .bub { fill: var(--accent-bg, var(--tint)); stroke: var(--accent, var(--line)); stroke-width: 2.4; stroke-linejoin: round; }
-  .card[data-status="議論中"]      { --accent: var(--moss);  --accent-bg: var(--moss-bg);  }
-  .card[data-status="取り上げ確定"] { --accent: var(--ochre); --accent-bg: var(--ochre-bg); }
-  .card[data-status="決議済み"]    { --accent: var(--slate); --accent-bg: var(--slate-bg); }
-  .card[data-status="議論中"] .icon .fig,
-  .card[data-status="取り上げ確定"] .icon .fig,
-  .card[data-status="決議済み"] .icon .fig { fill: var(--accent); }
-
-  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); font-size: var(--fs-s); color: var(--mute); }
-  .meta time { font-variant-numeric: tabular-nums; letter-spacing: 0; }
-  .row-side { display: flex; align-items: center; gap: var(--sp-2); }
-  .chev { display: grid; place-items: center; width: 44px; height: 44px; color: var(--ink); }
-  .chev .ic { transition: transform 200ms var(--ease); }
-  .card.open .chev .ic { transform: rotate(180deg); }
-
-  /* 状態ラベル（文言＋枠＋濃淡。色だけに頼らない） */
-  .status {
-    display: inline-flex; align-items: center; gap: var(--sp-1);
-    font-size: var(--fs-s); font-weight: 700; line-height: 1.3;
-    padding: 2px var(--sp-2); border: 1px solid var(--line); border-radius: var(--r-s);
-    color: var(--mute); background: var(--paper);
-  }
-  .status .ic { width: 1em; height: 1em; }
-  .s-active   { background: var(--moss); border-color: var(--moss); color: var(--on-accent); }
-  .s-adopted  { background: var(--ochre-bg); border-color: var(--ochre); color: var(--ochre); }
-  .s-resolved { background: var(--slate-bg); border-color: var(--slate); color: var(--slate); }
-  .adopted-note { color: var(--ochre); font-weight: 700; }
-
-  /* ボタン */
+  /* ─── ボタン（塗り=プライマリー / アウトライン=セカンダリー / テキスト=ターシャリー） ─── */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
-    min-height: 44px; padding: 0 var(--sp-4); border-radius: var(--r-s);
-    font-size: var(--fs-m); font-weight: 700; white-space: nowrap; text-decoration: none;
-    border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
-    transition: background 150ms var(--ease), color 150ms var(--ease);
+    min-height: 48px; padding: 0 var(--sp-4); border-radius: var(--r-s);
+    font-size: var(--fs-m); font-weight: 700; line-height: 1.3; white-space: nowrap; text-decoration: none;
+    border: 1px solid var(--primary); background: var(--primary); color: var(--on-primary);
+    transition: background-color 150ms var(--ease), color 150ms var(--ease), border-color 150ms var(--ease);
   }
-  .btn:hover { background: color-mix(in srgb, var(--ink) 88%, var(--paper)); }
-  .btn.outline { background: var(--white); color: var(--ink); border-color: var(--ink); }
-  .btn.outline:hover { background: var(--tint); }
+  .btn:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: var(--on-primary); text-decoration: none; }
+  .btn:active { background: var(--primary-active); }
+  .btn.outline { background: var(--surface); color: var(--primary); }
+  .btn.outline:hover { background: var(--primary-container); color: var(--on-primary-container); }
+  .btn.sm { min-height: 40px; padding: 0 var(--sp-3); font-size: var(--fs-s); }
   .btn[aria-disabled="true"] { cursor: progress; }
   .btn-text {
     display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px; padding: 0 var(--sp-1);
-    font-size: var(--fs-s); color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px;
+    font-size: var(--fs-s); color: var(--primary); text-decoration: underline; text-underline-offset: 3px;
   }
-  .btn-text:hover { color: var(--ink); text-decoration-thickness: 2px; }
-  .minutes-btn {
-    display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-3);
-    font-size: var(--fs-s); font-weight: 700; white-space: nowrap; border-radius: var(--r-s);
-    border: 1px solid var(--moss); background: var(--moss-bg); color: var(--moss);
-    transition: background 150ms var(--ease), color 150ms var(--ease);
-  }
-  .minutes-btn:hover { background: var(--moss); color: var(--on-accent); }
-  .minutes-btn.resolved { border-color: var(--slate); background: var(--slate-bg); color: var(--slate); }
-  .minutes-btn.resolved:hover { background: var(--slate); color: var(--on-accent); }
+  .btn-text:hover { color: var(--primary-hover); text-decoration-thickness: 2px; }
+  .btn-text.danger { color: var(--error); }
 
-  /* ─── 展開部 ─── */
-  .card-body { display: none; padding: 0 0 var(--sp-5) 56px; }
-  .card.open .card-body { display: block; }
-  .tabs { display: flex; gap: var(--sp-4); border-bottom: 1px solid var(--line); margin-bottom: var(--sp-4); }
-  .tab {
-    display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px;
-    color: var(--mute); margin-bottom: -1px; border-bottom: 3px solid transparent;
-    transition: color 150ms var(--ease);
-  }
-  .tab:hover { color: var(--ink); }
-  .tab[aria-selected="true"] { color: var(--ink); font-weight: 700; border-color: var(--ink); }
-  .tab .tc { font-weight: 400; color: var(--mute); font-variant-numeric: tabular-nums; }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
+  /* ─── アプリバー ─── */
+  .appbar { background: var(--surface); border-bottom: 1px solid var(--divider); position: sticky; top: 0; z-index: 100; }
+  .appbar-in { max-width: 1280px; margin: 0 auto; padding: 0 var(--sp-4); min-height: 64px; display: flex; align-items: center; gap: var(--sp-3); }
+  .brand { display: flex; align-items: center; gap: 12px; color: var(--text); text-decoration: none; margin-right: auto; }
+  .brand:hover { color: var(--text); }
+  .brand-mark { width: 36px; height: 36px; }
+  .brand-mark .bub { fill: var(--primary-container); stroke: var(--primary); stroke-width: 2.4; stroke-linejoin: round; }
+  .brand-mark .fig { fill: var(--primary); }
+  .brand-name { font-size: var(--fs-xl); font-weight: 700; line-height: 1.2; letter-spacing: .01em; }
+  .brand-sub { display: block; font-size: var(--fs-s); font-weight: 400; color: var(--text-3); }
 
-  .prose { line-height: 1.9; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; max-width: 40em; }
-  .prose.empty { color: var(--mute); }
-
-  /* 通知バナー（四辺の枠＋アイコン） */
-  .banner {
-    display: flex; align-items: flex-start; gap: var(--sp-2);
-    padding: var(--sp-2) var(--sp-3); margin-bottom: var(--sp-3);
-    border: 1px solid var(--line); border-radius: var(--r-s); background: var(--white);
-    font-size: var(--fs-s); line-height: 1.6;
+  /* ─── 表示切替（水平メニュー） ─── */
+  .views { background: var(--surface); border-bottom: 1px solid var(--divider); }
+  .views ul { max-width: 1280px; margin: 0 auto; padding: 0 var(--sp-4); display: flex; gap: var(--sp-2); overflow-x: auto; }
+  .views a {
+    display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 52px; padding: 0 var(--sp-3);
+    color: var(--text-2); text-decoration: none; white-space: nowrap; border-bottom: 3px solid transparent; margin-bottom: -1px;
+    transition: color 150ms var(--ease), border-color 150ms var(--ease);
   }
+  .views a:hover { color: var(--text); background: var(--bg-sub); }
+  .views a[aria-current="page"] { color: var(--primary); font-weight: 700; border-color: var(--primary); }
+  .count-badge {
+    min-width: 28px; padding: 0 var(--sp-2); border-radius: var(--r-full); text-align: center;
+    font-size: var(--fs-s); font-weight: 700; line-height: 24px; font-variant-numeric: tabular-nums;
+    background: var(--bg-sub); color: var(--text-2); border: 1px solid var(--divider);
+  }
+  .views a[aria-current="page"] .count-badge { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+
+  /* ─── 2ペイン ─── */
+  .layout { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: var(--list-w) 1fr; min-height: calc(100vh - 118px); }
+  .list-pane { background: var(--bg-sub); border-right: 1px solid var(--divider); padding: var(--sp-4) var(--sp-4) var(--sp-6); }
+  .detail-pane { padding: var(--sp-5) var(--sp-5) 96px; min-width: 0; }
+  .pane-head h1 { font-size: var(--fs-h1); font-weight: 700; line-height: 1.4; }
+  .pane-desc { color: var(--text-2); margin-top: var(--sp-1); font-size: var(--fs-s); }
+
+  /* 検索 */
+  .search { margin-top: var(--sp-3); }
+  .search label { display: block; font-size: var(--fs-s); font-weight: 700; margin-bottom: var(--sp-1); }
+  .search-box { position: relative; }
+  .search-box > .ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+  .search-box .field { padding-left: 44px; padding-right: 48px; }
+  .search-box .field::-webkit-search-cancel-button { display: none; }
+  .search-clear { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; color: var(--text-2); border-radius: var(--r-s); }
+  .search-clear:hover { background: var(--bg-sub); color: var(--text); }
+  .search-count { font-size: var(--fs-s); color: var(--text-3); margin-top: var(--sp-1); min-height: 1.7em; }
+
+  /* 議案リスト */
+  .items { display: grid; gap: var(--sp-2); margin-top: var(--sp-4); }
+  .item {
+    display: block; padding: var(--sp-3); border: 1px solid var(--border); border-radius: var(--r-m);
+    background: var(--surface); color: var(--text); text-decoration: none;
+    transition: background-color 150ms var(--ease), border-color 150ms var(--ease);
+  }
+  .item:hover { color: var(--text); background: var(--primary-container); }
+  .item[aria-current="true"] { border: 2px solid var(--primary); padding: 15px; background: var(--primary-container); }
+  .item-title { display: block; margin-top: var(--sp-2); font-size: var(--fs-l); font-weight: 700; line-height: 1.5; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; color: var(--text); }
+  .item:hover .item-title { text-decoration-thickness: 2px; }
+  .item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3); margin-top: var(--sp-2); font-size: var(--fs-s); color: var(--text-2); }
+  .item-meta span { display: inline-flex; align-items: center; gap: var(--sp-1); font-variant-numeric: tabular-nums; }
+  .item-meta .ic { width: 1em; height: 1em; }
+  .item-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+  .note { font-size: var(--fs-s); font-weight: 700; color: var(--primary); }
+
+  /* 状態チップ（文言＋アイコン＋塗り/枠） */
+  .chip {
+    display: inline-flex; align-items: center; gap: var(--sp-1);
+    padding: 2px 10px; border-radius: var(--r-full); border: 1px solid var(--border);
+    font-size: var(--fs-s); font-weight: 700; line-height: 1.5; background: var(--surface); color: var(--text-2);
+  }
+  .chip .ic { width: 1em; height: 1em; }
+  .chip.c-key         { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+  .chip.c-key-outline { background: var(--primary-container); border-color: var(--primary); color: var(--on-primary-container); }
+  .chip.c-success     { background: var(--success-bg); border-color: var(--success-line); color: var(--success); }
+
+  .propose-card { margin-top: var(--sp-4); padding: var(--sp-4); border: 1px solid var(--border); border-radius: var(--r-m); background: var(--surface); }
+  .propose-card h2 { font-size: var(--fs-l); font-weight: 700; line-height: 1.4; }
+  .propose-card p { font-size: var(--fs-s); color: var(--text-2); margin: var(--sp-1) 0 var(--sp-3); }
+
+  .state { display: flex; align-items: flex-start; gap: var(--sp-2); padding: var(--sp-4) 0; color: var(--text-2); }
+  .state .ic { margin-top: 2px; }
+
+  /* ─── 詳細 ─── */
+  .detail { max-width: 44em; }
+  .back { display: none; }
+  .d-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); color: var(--text-2); font-size: var(--fs-s); }
+  .d-top time { font-variant-numeric: tabular-nums; }
+  .d-title { font-size: var(--fs-h1); font-weight: 700; line-height: 1.4; margin-top: var(--sp-3); }
+  .d-actions { margin-top: var(--sp-4); display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+  .d-sec { margin-top: var(--sp-6); }
+  .d-sec > h3 { display: flex; align-items: baseline; gap: var(--sp-2); font-size: var(--fs-xl); font-weight: 700; line-height: 1.4; padding-bottom: var(--sp-2); border-bottom: 1px solid var(--divider); margin-bottom: var(--sp-3); }
+  .d-sec > h3 .n { font-size: var(--fs-m); font-weight: 400; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .prose { line-height: 1.9; white-space: pre-wrap; word-break: break-word; }
+  .prose.empty { color: var(--text-3); }
+
+  .banner { display: flex; align-items: flex-start; gap: var(--sp-2); padding: 12px var(--sp-3); border: 1px solid; border-radius: var(--r-s); font-size: var(--fs-s); line-height: 1.6; }
   .banner .ic { margin-top: 1px; }
-  .resolved-banner { border-color: var(--slate); background: var(--slate-bg); color: var(--slate); }
-  .db-notice { display: none; border-color: var(--clay); background: var(--clay-bg); color: var(--clay); }
-  .db-notice.show { display: flex; }
+  .banner-title { font-weight: 700; display: block; }
+  .banner.success { border-color: var(--success-line); background: var(--success-bg); color: var(--success); margin-top: var(--sp-4); }
+  .banner.error { border-color: var(--error-line); background: var(--error-bg); color: var(--error); margin-bottom: var(--sp-3); }
 
   /* 反応 */
-  .stamps-row {
-    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
-    border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; background: var(--white);
+  .stamps { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: var(--sp-2); }
+  .stamp {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 76px;
+    padding: 10px var(--sp-3); border: 1px solid var(--border); border-radius: var(--r-m); background: var(--surface); text-align: left;
+    transition: background-color 150ms var(--ease), color 150ms var(--ease), border-color 150ms var(--ease);
   }
-  .stamp-btn {
-    display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 72px;
-    padding: var(--sp-2) var(--sp-3); border-right: 1px solid var(--line-2); text-align: left;
-    transition: background 150ms var(--ease), color 150ms var(--ease);
-  }
-  .stamp-btn:last-child { border-right: none; }
-  .stamp-btn:hover { background: var(--tint); }
-  .stamp-label { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-s); color: var(--ink-2); }
+  .stamp:hover { background: var(--primary-container); border-color: var(--primary); }
+  .stamp-label { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-s); color: var(--text-2); }
   .stamp-label .ic { width: 1em; height: 1em; display: none; }
   .stamp-count { font-size: var(--fs-h2); font-weight: 700; line-height: 1.3; font-variant-numeric: tabular-nums; }
-  .stamp-btn.reacted { background: var(--moss); color: var(--on-accent); }
-  .stamp-btn.reacted .stamp-label { color: var(--on-accent); font-weight: 700; }
-  .stamp-btn.reacted .stamp-label .ic { display: inline; }
-  .stamp-btn[aria-busy="true"] { cursor: progress; }
-  .stamp-count.loading { color: var(--mute); }
-  .stamp-hint { font-size: var(--fs-s); color: var(--mute); margin-top: var(--sp-2); }
+  .stamp[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+  .stamp[aria-pressed="true"] .stamp-label { color: var(--on-primary); font-weight: 700; }
+  .stamp[aria-pressed="true"] .stamp-label .ic { display: inline; }
+  .stamp[aria-busy="true"] { cursor: progress; }
+  .hint { font-size: var(--fs-s); color: var(--text-2); margin-top: var(--sp-2); }
 
   /* コメント */
-  .comments-list { margin-bottom: var(--sp-4); }
-  .comment { padding: var(--sp-3) 0; border-bottom: 1px solid var(--line-2); }
-  .comment:first-child { padding-top: 0; }
-  .c-head { display: flex; align-items: center; gap: var(--sp-1) var(--sp-3); flex-wrap: wrap; }
+  .comments { display: grid; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+  .comment { display: grid; grid-template-columns: 40px 1fr; gap: 0 12px; }
+  .avatar { width: 40px; height: 40px; border-radius: var(--r-full); display: grid; place-items: center; background: var(--bg-sub); border: 1px solid var(--divider); color: var(--text-2); font-weight: 700; font-size: var(--fs-s); }
+  .comment.mine .avatar { background: var(--primary-container); border-color: var(--primary); color: var(--on-primary-container); }
+  .c-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0 12px; }
   .c-name { font-size: var(--fs-s); font-weight: 700; }
-  .c-name.mine::after { content: '（あなた）'; font-weight: 400; color: var(--mute); }
-  .c-time, .c-edited { font-size: var(--fs-s); color: var(--mute); font-variant-numeric: tabular-nums; }
-  .c-actions { margin-left: auto; display: flex; gap: var(--sp-3); }
-  .c-text { line-height: 1.8; color: var(--ink-2); word-break: break-word; }
-  .comment-edit-area { display: none; margin-top: var(--sp-2); }
-  .comments-loading, .comments-empty, .state {
-    display: flex; align-items: center; gap: var(--sp-2); color: var(--mute);
-  }
-  .comments-loading, .comments-empty { font-size: var(--fs-s); padding: var(--sp-1) 0 var(--sp-2); }
-  .state { padding: var(--sp-5) 0; }
+  .c-you { font-size: var(--fs-s); color: var(--text-2); }
+  .c-time, .c-edited { font-size: var(--fs-s); color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .c-actions { margin-left: auto; display: flex; gap: var(--sp-2); }
+  .c-text { line-height: 1.8; word-break: break-word; white-space: pre-wrap; }
+  .c-edit { display: none; margin-top: var(--sp-2); }
+  .c-edit .row { display: flex; gap: var(--sp-2); justify-content: flex-end; margin-top: var(--sp-2); }
+
+  .compose { padding: var(--sp-4); border: 1px solid var(--border); border-radius: var(--r-m); background: var(--surface); display: grid; gap: var(--sp-3); }
+  .compose h4 { font-size: var(--fs-m); font-weight: 700; }
+  .compose-foot { display: flex; justify-content: flex-end; }
 
   /* 入力欄 */
   .f label { display: flex; align-items: baseline; gap: var(--sp-2); font-size: var(--fs-s); font-weight: 700; margin-bottom: var(--sp-1); }
-  .req { font-weight: 400; color: var(--mute); }
-  .support { font-size: var(--fs-s); color: var(--mute); margin-top: var(--sp-1); }
-  .err-text { font-size: var(--fs-s); color: var(--clay); font-weight: 700; margin-top: var(--sp-1); }
+  .req { font-weight: 400; color: var(--text-2); }
+  .support { font-size: var(--fs-s); color: var(--text-2); margin-top: var(--sp-1); }
+  .err-text { font-size: var(--fs-s); color: var(--error); font-weight: 700; margin-top: var(--sp-1); }
   .field {
     width: 100%; min-height: 48px; padding: var(--sp-2) 12px;
-    border: 1px solid var(--line); border-radius: var(--r-s); background: var(--white);
+    border: 1px solid var(--border); border-radius: var(--r-s); background: var(--surface);
     transition: border-color 150ms var(--ease);
   }
-  .field:hover { border-color: var(--ink-2); }
-  .field:focus { border-color: var(--ink); }
-  .field[aria-invalid="true"] { border-color: var(--clay); border-width: 2px; }
-  textarea.field { resize: vertical; min-height: 96px; line-height: 1.8; }
-  .compose { display: grid; grid-template-columns: 200px 1fr auto; gap: var(--sp-3); align-items: start; }
-  .compose .btn { margin-top: calc(var(--fs-s) * 1.7 + var(--sp-1) + 2px); }
-  .edit-actions { display: flex; gap: var(--sp-2); justify-content: flex-end; margin-top: var(--sp-2); }
+  .field:hover { border-color: var(--text); }
+  .field[aria-invalid="true"] { border: 2px solid var(--error-line); }
+  textarea.field { resize: vertical; min-height: 104px; line-height: 1.8; }
+  .f-name { max-width: 20em; }
 
-  /* 提案フォームへの導線 */
-  .propose {
-    display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
-    margin-top: var(--sp-5); padding: var(--sp-4); border: 1px solid var(--ink); border-radius: var(--r-m); background: var(--white);
-  }
-  .propose h3 { font-size: var(--fs-l); font-weight: 700; line-height: 1.4; }
-  .propose p { color: var(--mute); margin-top: var(--sp-1); }
+  /* 空の詳細 */
+  .detail-empty { display: grid; place-items: center; text-align: center; min-height: 50vh; color: var(--text-2); }
+  .detail-empty .ic { width: 48px; height: 48px; color: var(--text-3); margin: 0 auto var(--sp-3); }
 
-  /* 検索 */
-  .search { padding: var(--sp-4) 0 var(--sp-2); max-width: 36em; }
-  .search-box { position: relative; }
-  .search-box > .ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--mute); pointer-events: none; }
-  .search-box .field { padding-left: 44px; padding-right: 48px; }
-  .search-box .field::-webkit-search-cancel-button { display: none; }
-  .search-clear { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink-2); border-radius: var(--r-s); }
-  .search-clear:hover { color: var(--ink); background: var(--tint); }
-  .search-count { font-size: var(--fs-s); color: var(--mute); margin-top: var(--sp-1); min-height: 1.6em; }
-
-  /* ─── 議事録モーダル ─── */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 200;
-    background: var(--scrim); padding: var(--sp-4); align-items: center; justify-content: center;
+  /* ─── 議事録ダイアログ ─── */
+  dialog.minutes {
+    width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); margin: auto; padding: 0;
+    border: 1px solid var(--border); border-radius: var(--r-xl); background: var(--surface); color: var(--text);
+    display: none; flex-direction: column; overflow: hidden;
   }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--paper); width: 100%; max-width: 680px; max-height: calc(100vh - 48px);
-    display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-l); overflow: hidden;
-  }
-  .modal-head { padding: var(--sp-4) var(--sp-4) 0; display: grid; grid-template-columns: 1fr auto; gap: 0 var(--sp-3); align-items: start; }
-  .modal-kicker { font-size: var(--fs-s); color: var(--mute); }
-  .modal-head h2 { grid-column: 1; font-size: 1.375rem; font-weight: 700; line-height: 1.4; }
-  .modal-close {
-    grid-column: 2; grid-row: 1 / span 2; display: inline-flex; align-items: center; gap: var(--sp-1);
-    min-height: 44px; padding: 0 var(--sp-2); margin: -6px -8px 0 0; font-size: var(--fs-s); color: var(--ink-2); border-radius: var(--r-s);
-  }
-  .modal-close:hover { color: var(--ink); background: var(--tint); }
-  .modal .tabs { padding: 0 var(--sp-4); margin: var(--sp-3) 0 0; }
-  .modal-scroll { padding: var(--sp-4); overflow-y: auto; }
-  .gdoc-iframe { width: 100%; height: 56vh; border: 1px solid var(--line); border-radius: var(--r-s); display: block; background: #fff; }
-  .gdoc-link { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px; }
+  dialog.minutes[open] { display: flex; animation: dlg-in 250ms var(--ease-in); }
+  dialog.minutes::backdrop { background: var(--scrim); }
+  @keyframes dlg-in { from { opacity: 0; transform: translateY(8px); } }
+  .dlg-head { padding: var(--sp-4) var(--sp-4) 0; display: grid; grid-template-columns: 1fr auto; gap: 0 var(--sp-3); align-items: start; }
+  .dlg-kicker { font-size: var(--fs-s); color: var(--text-2); }
+  .dlg-head h2 { font-size: var(--fs-xl); font-weight: 700; line-height: 1.4; }
+  .dlg-close { grid-column: 2; grid-row: 1 / span 2; display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px; padding: 0 var(--sp-2); margin: -6px -8px 0 0; border-radius: var(--r-s); color: var(--text-2); font-size: var(--fs-s); }
+  .dlg-close:hover { background: var(--bg-sub); color: var(--text); }
+  .tabs { display: flex; gap: var(--sp-4); padding: 0 var(--sp-4); margin-top: var(--sp-3); border-bottom: 1px solid var(--divider); }
+  .tab { min-height: 48px; color: var(--text-2); border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { color: var(--primary); font-weight: 700; border-color: var(--primary); }
+  .dlg-body { padding: var(--sp-4); overflow-y: auto; }
+  .gdoc-iframe { width: 100%; height: 56vh; border: 1px solid var(--border); border-radius: var(--r-s); display: block; background: #fff; }
 
   /* ─── トースト・フッター ─── */
   #toast {
     position: fixed; left: 50%; bottom: var(--sp-4); transform: translate(-50%, 8px);
-    background: var(--ink); color: var(--paper); font-size: var(--fs-s); padding: 12px var(--sp-4); border-radius: var(--r-s);
-    z-index: 300; opacity: 0; pointer-events: none; transition: opacity 200ms var(--ease), transform 200ms var(--ease);
-    max-width: calc(100vw - 32px);
+    background: var(--text); color: var(--bg); font-size: var(--fs-s); padding: 14px var(--sp-4); border-radius: var(--r-s);
+    z-index: 600; opacity: 0; pointer-events: none; max-width: calc(100vw - 32px);
+    transition: opacity 200ms var(--ease), transform 200ms var(--ease);
   }
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
-  footer { border-top: 1px solid var(--line); }
-  footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2) var(--sp-4); padding-top: var(--sp-3); padding-bottom: var(--sp-5); font-size: var(--fs-s); color: var(--mute); }
-  footer a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-2); }
-  footer a:hover { color: var(--ink); text-decoration-thickness: 2px; }
+  footer { border-top: 1px solid var(--divider); background: var(--surface); }
+  footer .in { max-width: 1280px; margin: 0 auto; padding: var(--sp-2) var(--sp-4) var(--sp-4); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2) var(--sp-4); font-size: var(--fs-s); color: var(--text-2); }
+  footer a { display: inline-flex; align-items: center; min-height: 44px; }
 
-  @media (max-width: 767px) {
-    .wrap { padding: 0 var(--sp-3); }
-    .mast { padding-top: var(--sp-4); }
-    .row { grid-template-columns: 32px 1fr 44px; gap: 0 12px; }
-    .icon { width: 32px; height: 32px; }
-    .row-side { display: contents; }
-    .row-side .minutes-btn { grid-column: 2; grid-row: 2; justify-self: start; margin-top: var(--sp-2); }
-    .row-side .chev { grid-column: 3; grid-row: 1; }
-    .card-body { padding-left: 0; }
-    .tabs { gap: var(--sp-3); }
-    .stamps-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .stamp-btn:nth-child(-n+3) { border-bottom: 1px solid var(--line-2); }
-    .stamp-btn:nth-child(3) { border-right: none; }
-    .compose { grid-template-columns: 1fr; }
-    .compose .btn { margin-top: 0; justify-self: end; }
-    .propose { flex-direction: column; align-items: flex-start; padding: var(--sp-3); }
-    .modal-overlay { padding: 0; align-items: stretch; }
-    .modal { max-height: 100vh; border: none; border-radius: 0; }
-    .modal-head, .modal-scroll { padding-left: var(--sp-3); padding-right: var(--sp-3); }
-    .modal .tabs { padding: 0 var(--sp-3); }
+  /* ─── 狭い画面: 一覧と詳細を切り替え ─── */
+  @media (max-width: 839px) {
+    .appbar-in, .views ul { padding: 0 var(--sp-2); }
+    .views ul { gap: 0; }
+    .views a { padding: 0 12px; }
+    .brand-sub { display: none; }
+    .appbar .btn span.long { display: none; }
+    .layout { grid-template-columns: 1fr; min-height: 0; }
+    .list-pane { border-right: none; padding: var(--sp-4) var(--sp-3) var(--sp-5); }
+    .detail-pane { padding: var(--sp-3) var(--sp-3) 80px; }
+    .layout[data-mode="list"] .detail-pane { display: none; }
+    .layout[data-mode="detail"] .list-pane { display: none; }
+    .back { display: inline-flex; margin-left: -4px; margin-bottom: var(--sp-2); }
+    .d-title { font-size: var(--fs-h2); }
+    .detail-empty { display: none; }
   }
+  @media (min-width: 840px) and (max-width: 1099px) { :root { --list-w: 340px; } }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+    *, *::before, *::after { transition-duration: 1ms !important; animation: none !important; }
   }
 </style>
 </head>
@@ -321,87 +311,84 @@
 
 <a class="skip" href="#main">本文へ移動</a>
 
-<header class="mast">
-  <div class="wrap">
-    <div class="mast-top">
-      <span>Shimokita College</span>
-      <time id="today"></time>
-    </div>
-    <h1>みんカレポータル</h1>
-    <p class="lede">議案の提案から議論、決議までを居住者全員で共有する場所です。関心のある議案に反応やコメントを残してください。</p>
+<header class="appbar">
+  <div class="appbar-in">
+    <a class="brand" href="#active">
+      <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <path class="bub" d="M8.8 2.6h18.9a5.2 5.2 0 0 1 5.2 5.2v5.4a5.2 5.2 0 0 1-5.2 5.2h-7.4l-6.9 4.4 1.4-4.4H8.8a5.2 5.2 0 0 1-5.2-5.2V7.8a5.2 5.2 0 0 1 5.2-5.2Z"/>
+        <path class="bub" d="M34.4 12.4h7.9a3.8 3.8 0 0 1 3.8 3.8v4.3a3.8 3.8 0 0 1-3.8 3.8h-.5l.9 3.3-4.9-3.3h-3.4a3.8 3.8 0 0 1-3.8-3.8v-4.3a3.8 3.8 0 0 1 3.8-3.8Z"/>
+        <circle class="fig" cx="9.4" cy="30.4" r="5"/><path class="fig" d="M2.9 46v-5.1a6.5 6.5 0 0 1 13 0V46Z"/>
+        <circle class="fig" cx="38.6" cy="30.4" r="5"/><path class="fig" d="M32.1 46v-5.1a6.5 6.5 0 0 1 13 0V46Z"/>
+      </svg>
+      <span class="brand-name">みんカレポータル<span class="brand-sub">Shimokita College 全体会議</span></span>
+    </a>
+    <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc5zKz8f8dSpdgNjBu8mpM68dgtRaJJqu1zXNxlT0s2pxqBFA/viewform?usp=dialog" target="_blank" rel="noopener"><span data-icon="plus"></span><span>提案<span class="long">する</span></span><span class="sr-only">（新しいタブで開きます）</span></a>
   </div>
 </header>
 
-<main class="wrap" id="main">
-  <section class="sec" id="sec-active" aria-labelledby="h-active">
-    <h2 id="h-active">審議中の議案</h2>
-    <p class="sec-desc">直近の全体会議で取り上げられている議題です。議事録から議論の経過を確認できます。</p>
-    <div class="list" id="active-cards">
-      <div class="state" id="active-loading" role="status"><span data-icon="hourglass"></span><span>議案を読み込んでいます</span></div>
-      <div class="state" id="active-empty" style="display:none">現在、審議中の議案はありません。</div>
-    </div>
-  </section>
+<nav class="views" aria-label="議案の分類">
+  <ul>
+    <li><a href="#active" data-view="active">審議中<span class="count-badge" id="n-active">-</span></a></li>
+    <li><a href="#proposals" data-view="proposals">提案<span class="count-badge" id="n-proposals">-</span></a></li>
+    <li><a href="#past" data-view="past">過去の議案<span class="count-badge" id="n-past">-</span></a></li>
+  </ul>
+</nav>
 
-  <section class="sec" id="sec-proposals" aria-labelledby="h-proposals">
-    <h2 id="h-proposals">居住者からの提案</h2>
-    <p class="sec-desc">反応やコメントで関心を示してください。支持が集まった提案は全体会議の議題になります。</p>
-    <div class="list" id="proposals-cards">
-      <div class="state" id="proposals-loading" role="status"><span data-icon="hourglass"></span><span>議案を読み込んでいます</span></div>
-      <div class="state" id="proposals-empty" style="display:none">現在、提案はありません。</div>
-    </div>
-    <div class="propose">
-      <div>
-        <h3>新しい議案を提案する</h3>
-        <p>居住者であれば誰でも提案できます。</p>
+<main id="main">
+  <div class="layout" id="layout" data-mode="list">
+    <section class="list-pane" aria-labelledby="pane-title">
+      <div class="pane-head">
+        <h1 id="pane-title">審議中の議案</h1>
+        <p class="pane-desc" id="pane-desc"></p>
       </div>
-      <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc5zKz8f8dSpdgNjBu8mpM68dgtRaJJqu1zXNxlT0s2pxqBFA/viewform?usp=dialog" target="_blank" rel="noopener">提案フォームを開く<span data-icon="external-link"></span><span class="sr-only">（新しいタブで開きます）</span></a>
-    </div>
-  </section>
+      <div class="search" id="search" hidden role="search">
+        <label for="q">過去の議案を検索<span class="req">（タイトル・内容・要約）</span></label>
+        <div class="search-box">
+          <span data-icon="search"></span>
+          <input class="field" id="q" type="search" autocomplete="off" oninput="onSearch(this.value)">
+          <button class="search-clear" id="q-clear" onclick="clearSearch()" aria-label="検索語を消去" hidden><span data-icon="x"></span></button>
+        </div>
+        <p class="search-count" id="q-count" aria-live="polite"></p>
+      </div>
+      <div id="list-state" class="state" role="status"><span data-icon="hourglass"></span><span>議案を読み込んでいます</span></div>
+      <ul class="items" id="items"></ul>
+      <div class="propose-card" id="propose-card" hidden>
+        <h2>新しい議案を提案する</h2>
+        <p>居住者であれば誰でも提案できます。支持が集まった提案は全体会議の議題になります。</p>
+        <a class="btn outline" href="https://docs.google.com/forms/d/e/1FAIpQLSc5zKz8f8dSpdgNjBu8mpM68dgtRaJJqu1zXNxlT0s2pxqBFA/viewform?usp=dialog" target="_blank" rel="noopener">提案フォームを開く<span data-icon="external-link"></span><span class="sr-only">（新しいタブで開きます）</span></a>
+      </div>
+    </section>
 
-  <section class="sec" id="sec-past" aria-labelledby="h-past">
-    <h2 id="h-past">過去の議案</h2>
-    <p class="sec-desc">これまでの全体会議で決議された議案です。</p>
-    <div class="search f" role="search">
-      <label for="past-search">過去の議案を検索<span class="req">タイトル・内容・要約が対象</span></label>
-      <div class="search-box">
-        <span data-icon="search"></span>
-        <input class="field" id="past-search" type="search" autocomplete="off" oninput="filterPastProposals(this.value)">
-        <button class="search-clear" id="search-clear" onclick="clearSearch()" aria-label="検索語を消去" hidden><span data-icon="x"></span></button>
-      </div>
-      <p class="search-count" id="past-count" aria-live="polite"></p>
-    </div>
-    <div class="list" id="past-cards">
-      <div class="state" id="past-empty">まだ決議された議案はありません。</div>
-    </div>
-  </section>
+    <section class="detail-pane" id="detail" aria-live="off" tabindex="-1">
+      <div class="detail-empty"><div><span data-icon="list"></span><p>一覧から議案を選ぶと、内容・反応・コメントが表示されます。</p></div></div>
+    </section>
+  </div>
 </main>
 
 <footer>
-  <div class="wrap">
-    <span>Shimokita College 全体会議</span>
+  <div class="in">
+    <span id="today"></span>
     <a href="admin.html">管理者ページ</a>
   </div>
 </footer>
 
-<div class="modal-overlay" id="minutes-modal" onclick="closeMinutesModalOutside(event)">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mm-title">
-    <div class="modal-head">
-      <div class="modal-kicker">議事録</div>
-      <h2 id="mm-title"></h2>
-      <button class="modal-close" onclick="closeMinutesModal()"><span data-icon="x"></span>閉じる</button>
-    </div>
-    <div class="tabs" role="tablist" aria-label="議事録の表示" onkeydown="tabKey(event)">
-      <button class="tab mtab" role="tab" id="mt-minutes" aria-controls="mm-minutes" aria-selected="true" onclick="switchMinutesTab(this,'mm-minutes')">議事録</button>
-      <button class="tab mtab" role="tab" id="mt-summary" aria-controls="mm-summary" aria-selected="false" tabindex="-1" onclick="switchMinutesTab(this,'mm-summary')">要約</button>
-      <button class="tab mtab" role="tab" id="mm-gdoc-tab" aria-controls="mm-gdoc" aria-selected="false" tabindex="-1" onclick="switchMinutesTab(this,'mm-gdoc')" style="display:none">ドキュメント</button>
-    </div>
-    <div class="modal-scroll">
-      <div id="mm-minutes" class="tab-content mcontent active" role="tabpanel" aria-labelledby="mt-minutes"><div id="mm-minutes-body" class="prose"></div></div>
-      <div id="mm-summary" class="tab-content mcontent" role="tabpanel" aria-labelledby="mt-summary"><div id="mm-summary-body" class="prose"></div></div>
-      <div id="mm-gdoc" class="tab-content mcontent" role="tabpanel" aria-labelledby="mm-gdoc-tab"><div id="mm-gdoc-body"></div></div>
-    </div>
+<dialog class="minutes" id="minutes" aria-labelledby="mm-title">
+  <div class="dlg-head">
+    <div class="dlg-kicker">議事録</div>
+    <h2 id="mm-title"></h2>
+    <button class="dlg-close" onclick="closeMinutes()"><span data-icon="x"></span>閉じる</button>
   </div>
-</div>
+  <div class="tabs" role="tablist" aria-label="議事録の表示" onkeydown="tabKey(event)">
+    <button class="tab" role="tab" id="mt-minutes" aria-controls="mp-minutes" aria-selected="true" onclick="minutesTab('minutes')">議事録</button>
+    <button class="tab" role="tab" id="mt-summary" aria-controls="mp-summary" aria-selected="false" tabindex="-1" onclick="minutesTab('summary')">要約</button>
+    <button class="tab" role="tab" id="mt-gdoc" aria-controls="mp-gdoc" aria-selected="false" tabindex="-1" onclick="minutesTab('gdoc')" hidden>ドキュメント</button>
+  </div>
+  <div class="dlg-body">
+    <div id="mp-minutes" role="tabpanel" aria-labelledby="mt-minutes"><div class="prose" id="mm-minutes"></div></div>
+    <div id="mp-summary" role="tabpanel" aria-labelledby="mt-summary" hidden><div class="prose" id="mm-summary"></div></div>
+    <div id="mp-gdoc" role="tabpanel" aria-labelledby="mt-gdoc" hidden></div>
+  </div>
+</dialog>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -409,48 +396,50 @@
 const SUPABASE_URL  = 'https://ggdjoxnjwqthhkwpcvqq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZGpveG5qd3F0aGhrd3BjdnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTYyNjIsImV4cCI6MjA5MzczMjI2Mn0.X1AvGI5I8I94siB6MS1B_ou9TlA5864wUNsuy6SK4bc';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSc5zKz8f8dSpdgNjBu8mpM68dgtRaJJqu1zXNxlT0s2pxqBFA/viewform?usp=dialog';
 
-// Lucide アイコン（lucide.dev の SVG パスをそのまま使用）
+// Lucide アイコン（lucide.dev の SVG パス）
 const LUCIDE = {
-  'chevron-down':  '<path d="m6 9 6 6 6-6"/>',
-  'file-text':     '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
-  'external-link': '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  'plus':          '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  'x':             '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  'check':         '<path d="M20 6 9 17l-5-5"/>',
+  'search':        '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   'hourglass':     '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
   'circle-alert':  '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
   'circle-check':  '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
-  'check':         '<path d="M20 6 9 17l-5-5"/>',
-  'search':        '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
-  'x':             '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  'circle':        '<circle cx="12" cy="12" r="10"/>',
+  'calendar':      '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  'message-circle':'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  'message-square':'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  'thumbs-up':     '<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>',
+  'file-text':     '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  'external-link': '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  'chevron-left':  '<path d="m15 18-6-6 6-6"/>',
+  'list':          '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
   'pencil':        '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
   'trash-2':       '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
   'send':          '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
 };
-function ic(name) {
-  return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${LUCIDE[name]}</svg>`;
-}
-
-// 議案アイコン（2人が話し合うピクトグラム）
-const AGENDA_ICON = `
-<svg class="icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-  <path class="bub" d="M8.8 2.6h18.9a5.2 5.2 0 0 1 5.2 5.2v5.4a5.2 5.2 0 0 1-5.2 5.2h-7.4l-6.9 4.4 1.4-4.4H8.8a5.2 5.2 0 0 1-5.2-5.2V7.8a5.2 5.2 0 0 1 5.2-5.2Z"/>
-  <path class="bub" d="M34.4 12.4h7.9a3.8 3.8 0 0 1 3.8 3.8v4.3a3.8 3.8 0 0 1-3.8 3.8h-.5l.9 3.3-4.9-3.3h-3.4a3.8 3.8 0 0 1-3.8-3.8v-4.3a3.8 3.8 0 0 1 3.8-3.8Z"/>
-  <circle class="fig" cx="9.4" cy="30.4" r="5"/>
-  <path class="fig" d="M2.9 46v-5.1a6.5 6.5 0 0 1 13 0V46Z"/>
-  <circle class="fig" cx="38.6" cy="30.4" r="5"/>
-  <path class="fig" d="M32.1 46v-5.1a6.5 6.5 0 0 1 13 0V46Z"/>
-</svg>`;
+const ic = name => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${LUCIDE[name]}</svg>`;
 
 // reactions.emoji 列にはこのキー文字列がそのまま保存されている
 const STAMPS = ['関心あり', '議論したい', '賛成', '反対', '様子見'];
 
 const STATUS_CFG = {
-  '提案中':      { cls:'s-pending',  label:'検討中',   section:'proposals' },
-  '取り上げ確定': { cls:'s-adopted',  label:'採択予定', section:'proposals' },
-  '議論中':      { cls:'s-active',   label:'審議中',   section:'active'    },
-  '決議済み':    { cls:'s-resolved', label:'決議済み', section:'past'      },
+  '提案中':      { label:'検討中',   chip:'',              icon:'circle',         view:'proposals' },
+  '取り上げ確定': { label:'採択予定', chip:'c-key-outline', icon:'calendar',       view:'proposals' },
+  '議論中':      { label:'審議中',   chip:'c-key',         icon:'message-circle', view:'active'    },
+  '決議済み':    { label:'決議済み', chip:'c-success',     icon:'circle-check',   view:'past'      },
 };
-const SECTION_ID = { active:'active-cards', proposals:'proposals-cards', past:'past-cards' };
+const VIEWS = {
+  active:    { title:'審議中の議案',     desc:'直近の全体会議で取り上げられている議題です。議事録から議論の経過を確認できます。', empty:'現在、審議中の議案はありません。' },
+  proposals: { title:'居住者からの提案', desc:'反応やコメントで関心を示してください。支持が集まった提案は全体会議の議題になります。', empty:'現在、提案はありません。' },
+  past:      { title:'過去の議案',       desc:'これまでの全体会議で決議された議案です。', empty:'まだ決議された議案はありません。' },
+};
+const cfgOf  = p => STATUS_CFG[p.status] || STATUS_CFG['提案中'];
+const chipOf = p => { const c = cfgOf(p); return `<span class="chip ${c.chip}">${ic(c.icon)}${c.label}</span>`; };
 
+// ─── 利用者の識別（端末ごと） ───
 function getSessionId() {
   let id = localStorage.getItem('sc_session_id');
   if (!id) {
@@ -460,393 +449,371 @@ function getSessionId() {
   }
   return id;
 }
-function getSavedName() { return localStorage.getItem('sc_username') || ''; }
-function saveName(n)    { if (n) localStorage.setItem('sc_username', n); }
+const getSavedName = () => localStorage.getItem('sc_username') || '';
+const saveName = n => { if (n) localStorage.setItem('sc_username', n); };
 
-const proposalData = {};
-const loadedItems  = {};
-const commentSubs  = {};
+// ─── 状態 ───
+const state = { items: {}, reactN: {}, commentN: {}, view: 'active', sel: null, q: '', loaded: false };
+const wide = matchMedia('(min-width: 840px)');
 
-// ─── 議案の行を生成 ───
-function createCard(p) {
-  const cfg = STATUS_CFG[p.status] || STATUS_CFG['提案中'];
-  const id  = p.item_id;
-  const hasMinutes = p.status === '議論中' || p.status === '決議済み';
-  const desc = (p.description || '').trim();
-
-  const stampBtns = STAMPS.map(k => `
-    <button class="stamp-btn" data-key="${k}" aria-pressed="false" onclick="react(event,this,'${id}')">
-      <span class="stamp-label">${ic('check')}${k}</span>
-      <span class="stamp-count loading">0</span>
-    </button>`).join('');
-
-  const tab = (key, label, extra = '') => `
-    <button class="tab" role="tab" id="tb-${id}-${key}" aria-controls="tc-${id}-${key}"
-      aria-selected="${key === 'detail'}" ${key === 'detail' ? '' : 'tabindex="-1"'}
-      onclick="switchTab(event,this,'tc-${id}-${key}')">${label}${extra}</button>`;
-
-  const el = document.createElement('article');
-  el.className = 'card';
-  el.dataset.itemId = id;
-  el.dataset.dbId   = p.id;
-  el.dataset.status = p.status;
-  el.innerHTML = `
-    <div class="row" onclick="rowClick(event,this.parentElement)">
-      <span class="rail">${AGENDA_ICON}</span>
-      <div>
-        <h3><button class="row-toggle" aria-expanded="false" aria-controls="body-${id}">${escHtml(p.title)}</button></h3>
-        <div class="meta">
-          <span class="status ${cfg.cls}">${cfg.label}</span>
-          ${p.status === '取り上げ確定' ? '<span class="adopted-note">次回の議題に採用</span>' : ''}
-          ${p.created_at ? `<time datetime="${p.created_at}">${fmtDate(p.created_at)}</time>` : ''}
-        </div>
-      </div>
-      <div class="row-side">
-        ${hasMinutes ? `<button class="minutes-btn${p.status === '決議済み' ? ' resolved' : ''}" onclick="openMinutesModal(event,'${id}')">${ic('file-text')}議事録</button>` : ''}
-        <span class="chev" aria-hidden="true">${ic('chevron-down')}</span>
-      </div>
-    </div>
-    <div class="card-body" id="body-${id}">
-      <div class="tabs" role="tablist" aria-label="議案の情報" onkeydown="tabKey(event)">
-        ${tab('detail', '内容')}
-        ${tab('stamps', '反応', `<span class="tc" id="stc-${id}"></span>`)}
-        ${tab('comments', 'コメント', `<span class="tc" id="ctc-${id}"></span>`)}
-      </div>
-      <div id="tc-${id}-detail" class="tab-content active" role="tabpanel" aria-labelledby="tb-${id}-detail">
-        ${p.status === '決議済み' ? `<div class="banner resolved-banner">${ic('circle-check')}<span>この議案は決議済みです。経過は「議事録」から確認できます。</span></div>` : ''}
-        <div class="prose${desc ? '' : ' empty'}">${desc ? escHtml(desc) : '提案内容は記載されていません。'}</div>
-      </div>
-      <div id="tc-${id}-stamps" class="tab-content" role="tabpanel" aria-labelledby="tb-${id}-stamps">
-        <div class="banner db-notice" id="err-${id}-stamps"></div>
-        <div class="stamps-row" data-stamps-for="${id}" role="group" aria-label="反応">${stampBtns}</div>
-        <p class="stamp-hint">押すと反応が記録されます。もう一度押すと取り消せます。</p>
-      </div>
-      <div id="tc-${id}-comments" class="tab-content" role="tabpanel" aria-labelledby="tb-${id}-comments">
-        <div class="banner db-notice" id="err-${id}-comments"></div>
-        <div class="comments-list" id="cl-${id}"><div class="comments-loading">${ic('hourglass')}コメントを読み込んでいます</div></div>
-        <div class="compose">
-          <div class="f">
-            <label for="cname-${id}">名前<span class="req">※任意</span></label>
-            <input class="field" id="cname-${id}" type="text" autocomplete="nickname" aria-describedby="cname-help-${id}" value="${escHtml(getSavedName())}" onblur="saveName(this.value.trim())">
-            <p class="support" id="cname-help-${id}">空欄なら「匿名」と表示</p>
-          </div>
-          <div class="f">
-            <label for="ci-${id}">コメント<span class="req">※必須</span></label>
-            <input class="field" id="ci-${id}" type="text" aria-describedby="cerr-${id}" onkeydown="handleCommentKey(event,'${id}')" oninput="clearCommentError('${id}')">
-            <p class="err-text" id="cerr-${id}" hidden>＊コメントを入力してください。</p>
-          </div>
-          <button class="btn" id="cs-${id}" onclick="submitComment('${id}')">${ic('send')}<span>送信</span></button>
-        </div>
-      </div>
-    </div>`;
-  return el;
+function itemsOf(view) {
+  return Object.values(state.items)
+    .filter(p => cfgOf(p).view === view)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || String(a.created_at).localeCompare(String(b.created_at)));
+}
+function matches(p, q) {
+  return !q || `${p.title} ${p.description || ''} ${p.summary || ''}`.toLowerCase().includes(q);
 }
 
-// ─── 状態に応じてセクションへ配置 ───
-function removeCard(card) {
-  const itemId = card.dataset.itemId;
-  card.remove();
-  delete loadedItems[itemId];
-  if (commentSubs[itemId]) { db.removeChannel(commentSubs[itemId]); delete commentSubs[itemId]; }
+// ─── 画面の切替（URLの # で表示中の分類と議案を保持） ───
+function route() {
+  const [v, id] = location.hash.slice(1).split('/');
+  const view = VIEWS[v] ? v : 'active';
+  const changedView = view !== state.view;
+  state.view = view;
+  let sel = id && state.items[id] ? id : null;
+  // 議案の状態が変わって別の分類に移っていたら、その分類へ移す
+  if (sel && cfgOf(state.items[sel]).view !== view) { history.replaceState(null, '', `#${cfgOf(state.items[sel]).view}/${sel}`); return route(); }
+  if (!sel && wide.matches && state.loaded) {
+    const first = itemsOf(view).find(p => matches(p, state.q));
+    if (first) { history.replaceState(null, '', `#${view}/${first.item_id}`); sel = first.item_id; }
+  }
+  if (changedView) { state.q = ''; document.getElementById('q').value = ''; }
+  const selChanged = sel !== state.sel;
+  state.sel = sel;
+  renderNav(); renderList();
+  if (selChanged || !document.querySelector('.detail')) renderDetail();
+  document.getElementById('layout').dataset.mode = sel ? 'detail' : 'list';
+}
+window.addEventListener('hashchange', () => {
+  route();
+  if (!wide.matches && state.sel) document.getElementById('detail').focus({ preventScroll: true }), scrollTo(0, 0);
+});
+wide.addEventListener('change', route);
+
+function renderNav() {
+  for (const v of Object.keys(VIEWS)) {
+    const a = document.querySelector(`.views a[data-view="${v}"]`);
+    if (v === state.view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    document.getElementById(`n-${v}`).textContent = state.loaded ? itemsOf(v).length : '-';
+  }
 }
 
-function placeCard(p) {
-  const existing = document.querySelector(`.card[data-item-id="${p.item_id}"]`);
-  const wasOpen = existing?.classList.contains('open');
-  if (existing) removeCard(existing);
+function renderList() {
+  const v = VIEWS[state.view];
+  document.getElementById('pane-title').textContent = v.title;
+  document.getElementById('pane-desc').textContent = v.desc;
+  document.getElementById('search').hidden = state.view !== 'past';
+  document.getElementById('propose-card').hidden = state.view !== 'proposals' || !state.loaded;
+  if (!state.loaded) return;
 
-  if (p.is_published === false) {
-    delete proposalData[p.item_id];
-    updateEmptyStates();
+  const all = itemsOf(state.view);
+  const list = all.filter(p => matches(p, state.q));
+  const st = document.getElementById('list-state');
+  st.hidden = list.length > 0;
+  if (!list.length) st.innerHTML = `${ic('list')}<span>${state.q ? '該当する議案はありません。検索語を変えてください。' : v.empty}</span>`;
+  document.getElementById('q-count').textContent = state.q ? `${list.length}件が該当` : '';
+  document.getElementById('q-clear').hidden = !state.q;
+
+  document.getElementById('items').innerHTML = list.map(p => `
+    <li><a class="item" href="#${state.view}/${p.item_id}" ${p.item_id === state.sel ? 'aria-current="true"' : ''}>
+      <span class="item-top">${chipOf(p)}${p.status === '取り上げ確定' ? '<span class="note">次回の議題に採用</span>' : ''}</span>
+      <span class="item-title">${escHtml(p.title)}</span>
+      <span class="item-meta">
+        ${p.created_at ? `<span><time datetime="${p.created_at}">${fmtDate(p.created_at)}</time></span>` : ''}
+        <span>${ic('thumbs-up')}反応 ${state.reactN[p.item_id] || 0}</span>
+        <span>${ic('message-square')}コメント ${state.commentN[p.item_id] || 0}</span>
+      </span>
+    </a></li>`).join('');
+}
+
+// ─── 詳細 ───
+function renderDetail() {
+  const el = document.getElementById('detail');
+  const p = state.items[state.sel];
+  if (!p) {
+    el.innerHTML = `<div class="detail-empty"><div>${ic('list')}<p>一覧から議案を選ぶと、内容・反応・コメントが表示されます。</p></div></div>`;
     return;
   }
-  proposalData[p.item_id] = p;
-  const cfg  = STATUS_CFG[p.status] || STATUS_CFG['提案中'];
-  const card = createCard(p);
-  document.getElementById(SECTION_ID[cfg.section]).appendChild(card);
-  if (wasOpen) toggleCard(card);
-  updateEmptyStates();
+  const id = p.item_id;
+  el.innerHTML = `
+    <article class="detail" aria-labelledby="d-title">
+      <a class="btn-text back" href="#${state.view}">${ic('chevron-left')}一覧に戻る</a>
+      <div id="d-head"></div>
+
+      <section class="d-sec" aria-labelledby="h-stamps">
+        <h3 id="h-stamps">反応<span class="n" id="d-rn"></span></h3>
+        <div class="banner error" id="err-stamps" hidden></div>
+        <div class="stamps" id="stamps" role="group" aria-label="反応を選ぶ">
+          ${STAMPS.map(k => `<button class="stamp" data-key="${k}" aria-pressed="false" onclick="react(this)">
+            <span class="stamp-label">${ic('check')}${k}</span><span class="stamp-count">-</span></button>`).join('')}
+        </div>
+        <p class="hint">押すと反応が記録されます。もう一度押すと取り消せます。</p>
+      </section>
+
+      <section class="d-sec" aria-labelledby="h-comments">
+        <h3 id="h-comments">コメント<span class="n" id="d-cn"></span></h3>
+        <div class="banner error" id="err-comments" hidden></div>
+        <div class="comments" id="comments"><div class="state">${ic('hourglass')}<span>コメントを読み込んでいます</span></div></div>
+        <div class="compose">
+          <h4>コメントを書く</h4>
+          <div class="f f-name">
+            <label for="cname">名前<span class="req">※任意</span></label>
+            <input class="field" id="cname" type="text" autocomplete="nickname" aria-describedby="cname-h" value="${escHtml(getSavedName())}" onblur="saveName(this.value.trim())">
+            <p class="support" id="cname-h">空欄なら「匿名」と表示されます</p>
+          </div>
+          <div class="f">
+            <label for="ctext">コメント<span class="req">※必須</span></label>
+            <textarea class="field" id="ctext" rows="3" aria-describedby="ctext-h ctext-err" onkeydown="commentKey(event)" oninput="clearErr()"></textarea>
+            <p class="support" id="ctext-h">Enterで送信、Shift＋Enterで改行</p>
+            <p class="err-text" id="ctext-err" hidden>＊コメントを入力してください。</p>
+          </div>
+          <div class="compose-foot"><button class="btn" id="csend" onclick="submitComment()">${ic('send')}<span>送信</span></button></div>
+        </div>
+      </section>
+    </article>`;
+  renderHead();
+  loadStamps(id);
+  loadComments(id);
 }
 
-function updateEmptyStates() {
-  ['active-loading', 'proposals-loading'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
-  Object.entries(SECTION_ID).forEach(([sec, cid]) => {
-    const n = document.getElementById(cid).querySelectorAll('.card').length;
-    document.getElementById(`count-${sec}`)?.replaceChildren(String(n));
-    const empty = document.getElementById(`${sec}-empty`);
-    if (empty && sec !== 'past') empty.style.display = n === 0 ? 'flex' : 'none';
-  });
-  filterPastProposals(document.getElementById('past-search').value);
+// 見出し部分だけ描き直す（入力中のコメントを消さないため）
+function renderHead() {
+  const p = state.items[state.sel];
+  const head = document.getElementById('d-head');
+  if (!p || !head) return;
+  const desc = (p.description || '').trim();
+  const hasMinutes = p.status === '議論中' || p.status === '決議済み';
+  head.innerHTML = `
+    <div class="d-top">${chipOf(p)}${p.status === '取り上げ確定' ? '<span class="note">次回の議題に採用</span>' : ''}
+      ${p.created_at ? `<span>提案日 <time datetime="${p.created_at}">${fmtDate(p.created_at)}</time></span>` : ''}</div>
+    <h2 class="d-title" id="d-title">${escHtml(p.title)}</h2>
+    ${p.status === '決議済み' ? `<div class="banner success">${ic('circle-check')}<span><span class="banner-title">決議済み</span>この議案は全体会議で決議されました。経過は議事録から確認できます。</span></div>` : ''}
+    ${hasMinutes ? `<div class="d-actions"><button class="btn outline" onclick="openMinutes(this)">${ic('file-text')}議事録を読む</button></div>` : ''}
+    <section class="d-sec" aria-labelledby="h-desc">
+      <h3 id="h-desc">内容</h3>
+      <div class="prose${desc ? '' : ' empty'}">${desc ? escHtml(desc) : '提案内容は記載されていません。'}</div>
+    </section>`;
 }
 
 // ─── データ取得 ───
-async function fetchProposals() {
-  const { data, error } = await db.from('proposals').select('*')
-    .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
-  if (error) {
-    console.error(error);
-    ['active-loading', 'proposals-loading'].forEach(id => {
-      const e = document.getElementById(id);
-      if (e) e.innerHTML = `${ic('circle-alert')}<span>議案を読み込めませんでした。時間をおいてページを再読み込みしてください。</span>`;
-    });
+async function fetchAll() {
+  const [pr, rx, cm] = await Promise.all([
+    db.from('proposals').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+    db.from('reactions').select('item_id'),
+    db.from('comments').select('item_id'),
+  ]);
+  if (pr.error) {
+    console.error(pr.error);
+    document.getElementById('list-state').innerHTML = `${ic('circle-alert')}<span>議案を読み込めませんでした。時間をおいてページを再読み込みしてください。</span>`;
     return;
   }
-  (data || []).forEach(placeCard);
-  updateEmptyStates();
-}
-
-async function loadItemData(itemId) {
-  if (loadedItems[itemId]) return;
-  loadedItems[itemId] = true;
-  await Promise.all([loadStamps(itemId), loadComments(itemId)]);
-  subscribeComments(itemId);
+  (pr.data || []).forEach(p => { if (p.is_published !== false) state.items[p.item_id] = p; });
+  (rx.data || []).forEach(r => state.reactN[r.item_id] = (state.reactN[r.item_id] || 0) + 1);
+  (cm.data || []).forEach(c => state.commentN[c.item_id] = (state.commentN[c.item_id] || 0) + 1);
+  state.loaded = true;
+  route();
 }
 
 async function loadStamps(itemId) {
   const { data, error } = await db.from('reactions').select('emoji,session_id').eq('item_id', itemId);
-  const row = document.querySelector(`[data-stamps-for="${itemId}"]`);
-  if (!row) return;
+  if (state.sel !== itemId) return;
+  const box = document.getElementById('stamps');
   if (error) {
-    showError(itemId, 'stamps', '反応を読み込めませんでした。時間をおいて開き直してください。');
-    row.querySelectorAll('.stamp-count').forEach(c => { c.textContent = '-'; c.classList.remove('loading'); });
+    showErr('stamps', '反応を読み込めませんでした。時間をおいて開き直してください。');
+    box.querySelectorAll('.stamp-count').forEach(c => c.textContent = '-');
     return;
   }
   const counts = {}, mine = new Set(), sid = getSessionId();
   (data || []).forEach(r => { counts[r.emoji] = (counts[r.emoji] || 0) + 1; if (r.session_id === sid) mine.add(r.emoji); });
-  row.querySelectorAll('.stamp-btn').forEach(btn => {
-    const k = btn.dataset.key;
-    const c = btn.querySelector('.stamp-count');
-    c.textContent = counts[k] || 0; c.classList.remove('loading');
-    setReacted(btn, mine.has(k));
+  box.querySelectorAll('.stamp').forEach(b => {
+    b.querySelector('.stamp-count').textContent = counts[b.dataset.key] || 0;
+    b.setAttribute('aria-pressed', mine.has(b.dataset.key));
   });
-  updateStampTotal(itemId);
+  state.reactN[itemId] = (data || []).length;
+  updateTotals();
 }
 
 async function loadComments(itemId) {
-  const listEl = document.getElementById(`cl-${itemId}`);
-  if (!listEl) return;
   const { data, error } = await db.from('comments').select('*').eq('item_id', itemId).order('created_at', { ascending: true });
-  listEl.innerHTML = '';
-  if (error) { showError(itemId, 'comments', 'コメントを読み込めませんでした。時間をおいて開き直してください。'); return; }
-  if (!data || data.length === 0) { listEl.innerHTML = '<div class="comments-empty">まだコメントはありません。</div>'; }
-  else data.forEach(c => appendComment(listEl, c));
-  updateCommentTotal(itemId);
+  if (state.sel !== itemId) return;
+  const list = document.getElementById('comments');
+  list.innerHTML = '';
+  if (error) { showErr('comments', 'コメントを読み込めませんでした。時間をおいて開き直してください。'); return; }
+  if (!data?.length) list.innerHTML = '<p class="state">まだコメントはありません。最初の意見を書いてみてください。</p>';
+  else data.forEach(c => appendComment(c));
+  state.commentN[itemId] = (data || []).length;
+  updateTotals();
+}
+
+function updateTotals() {
+  const id = state.sel;
+  const rn = document.getElementById('d-rn'), cn = document.getElementById('d-cn');
+  if (rn) rn.textContent = `${state.reactN[id] || 0}件`;
+  if (cn) cn.textContent = `${state.commentN[id] || 0}件`;
+  renderList();
 }
 
 // ─── リアルタイム反映 ───
 function subscribeAll() {
+  const upsert = p => {
+    if (p.is_published === false) delete state.items[p.item_id];
+    else state.items[p.item_id] = p;
+    afterChange(p.item_id);
+  };
   db.channel('proposals-watch')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'proposals' }, p => placeCard(p.new))
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'proposals' }, p => placeCard(p.new))
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'proposals' }, p => {
-      const card = document.querySelector(`.card[data-db-id="${p.old?.id}"]`);
-      if (card) { delete proposalData[card.dataset.itemId]; removeCard(card); updateEmptyStates(); }
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'proposals' }, e => upsert(e.new))
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'proposals' }, e => upsert(e.new))
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'proposals' }, e => {
+      const p = Object.values(state.items).find(x => x.id === e.old?.id);
+      if (p) { delete state.items[p.item_id]; afterChange(p.item_id); }
+    })
+    .subscribe();
+
+  db.channel('comments-watch')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, e => {
+      const c = e.new;
+      if (c.session_id === getSessionId()) return;  // 自分の投稿は送信時に反映済み
+      state.commentN[c.item_id] = (state.commentN[c.item_id] || 0) + 1;
+      if (state.sel === c.item_id) { document.querySelector('#comments > .state')?.remove(); appendComment(c); }
+      updateTotals();
     })
     .subscribe();
 }
-
-function subscribeComments(itemId) {
-  if (commentSubs[itemId]) return;
-  commentSubs[itemId] = db.channel(`comments-${itemId}`)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: `item_id=eq.${itemId}` }, payload => {
-      if (payload.new.session_id === getSessionId()) return;
-      const listEl = document.getElementById(`cl-${itemId}`);
-      if (!listEl) return;
-      listEl.querySelector('.comments-empty')?.remove();
-      appendComment(listEl, payload.new);
-      updateCommentTotal(itemId);
-    }).subscribe();
+function afterChange(itemId) {
+  if (itemId === state.sel) {
+    if (!state.items[itemId]) { history.replaceState(null, '', `#${state.view}`); state.sel = null; renderDetail(); }
+    else renderHead();
+  }
+  route();
 }
 
-// ─── 開閉・タブ ───
-function toggleCard(card) {
-  const open = card.classList.toggle('open');
-  card.querySelector('.row-toggle').setAttribute('aria-expanded', open);
-  if (open) loadItemData(card.dataset.itemId);
-}
-// 行のどこを押しても開閉する（議事録ボタンは除く）。操作の実体は見出し内のボタン
-function rowClick(e, card) {
-  if (e.target.closest('.minutes-btn')) return;
-  toggleCard(card);
-}
-function switchTab(e, tab, contentId) {
-  e.stopPropagation();
-  const body = tab.closest('.card-body');
-  body.querySelectorAll('.tab').forEach(t => { t.setAttribute('aria-selected', 'false'); t.tabIndex = -1; });
-  body.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  tab.setAttribute('aria-selected', 'true'); tab.tabIndex = 0;
-  document.getElementById(contentId).classList.add('active');
-}
-// タブ内は矢印キー・Home・Endで移動（WAI-ARIA tablist）
-function tabKey(e) {
-  const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')].filter(t => t.style.display !== 'none');
-  const i = tabs.indexOf(document.activeElement);
-  if (i < 0) return;
-  const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
-  if (next === undefined) return;
-  e.preventDefault();
-  const t = tabs[(next + tabs.length) % tabs.length];
-  t.focus(); t.click();
-}
-
-// ─── 反応（スタンプ） ───
-function setReacted(btn, on) {
-  btn.classList.toggle('reacted', on);
-  btn.setAttribute('aria-pressed', on);
-}
-function updateStampTotal(itemId) {
-  const row = document.querySelector(`[data-stamps-for="${itemId}"]`);
-  const el  = document.getElementById(`stc-${itemId}`);
-  if (!row || !el) return;
-  const total = [...row.querySelectorAll('.stamp-count')].reduce((s, c) => s + (parseInt(c.textContent) || 0), 0);
-  el.textContent = total || '';
-}
-
-async function react(e, btn, itemId) {
-  e.stopPropagation();
+// ─── 反応 ───
+async function react(btn) {
   if (btn.getAttribute('aria-busy') === 'true') return;
-  const key = btn.dataset.key, sid = getSessionId();
-  const reacted = btn.classList.contains('reacted');
+  const itemId = state.sel, key = btn.dataset.key, sid = getSessionId();
+  const on = btn.getAttribute('aria-pressed') === 'true';
   const countEl = btn.querySelector('.stamp-count');
   const prev = parseInt(countEl.textContent) || 0;
   btn.setAttribute('aria-busy', 'true');
-  hideError(itemId, 'stamps');
-  if (reacted) {
-    setReacted(btn, false); countEl.textContent = Math.max(0, prev - 1);
+  hideErr('stamps');
+  const set = (pressed, n, delta) => { btn.setAttribute('aria-pressed', pressed); countEl.textContent = n; state.reactN[itemId] = (state.reactN[itemId] || 0) + delta; updateTotals(); };
+  if (on) {
+    set(false, Math.max(0, prev - 1), -1);
     const { error } = await db.from('reactions').delete().eq('item_id', itemId).eq('emoji', key).eq('session_id', sid);
-    if (error) { setReacted(btn, true); countEl.textContent = prev; showError(itemId, 'stamps', `「${key}」を取り消せませんでした。もう一度押してください。`); }
+    if (error) { set(true, prev, 1); showErr('stamps', `「${key}」を取り消せませんでした。もう一度押してください。`); }
   } else {
-    setReacted(btn, true); countEl.textContent = prev + 1;
+    set(true, prev + 1, 1);
     const { error } = await db.from('reactions').insert({ item_id: itemId, emoji: key, session_id: sid });
-    if (error) { setReacted(btn, false); countEl.textContent = prev; showError(itemId, 'stamps', `「${key}」を記録できませんでした。もう一度押してください。`); }
+    if (error) { set(false, prev, -1); showErr('stamps', `「${key}」を記録できませんでした。もう一度押してください。`); }
   }
   btn.removeAttribute('aria-busy');
-  updateStampTotal(itemId);
 }
 
 // ─── コメント ───
-function handleCommentKey(e, itemId) {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submitComment(itemId); }
+function commentKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submitComment(); }
 }
-function updateCommentTotal(itemId) {
-  const el = document.getElementById(`ctc-${itemId}`);
-  const list = document.getElementById(`cl-${itemId}`);
-  if (el && list) el.textContent = list.querySelectorAll('.comment').length || '';
+function clearErr() {
+  document.getElementById('ctext').removeAttribute('aria-invalid');
+  document.getElementById('ctext-err').hidden = true;
 }
-function clearCommentError(itemId) {
-  document.getElementById(`ci-${itemId}`).removeAttribute('aria-invalid');
-  document.getElementById(`cerr-${itemId}`).hidden = true;
-}
-
-async function submitComment(itemId) {
-  const inputEl  = document.getElementById(`ci-${itemId}`);
-  const nameEl   = document.getElementById(`cname-${itemId}`);
-  const submitEl = document.getElementById(`cs-${itemId}`);
-  if (submitEl.getAttribute('aria-disabled') === 'true') return;
-  const text = inputEl.value.trim();
-  if (!text) {
-    inputEl.setAttribute('aria-invalid', 'true');
-    document.getElementById(`cerr-${itemId}`).hidden = false;
-    inputEl.focus();
-    return;
-  }
+async function submitComment() {
+  const itemId = state.sel;
+  const input = document.getElementById('ctext'), nameEl = document.getElementById('cname'), btn = document.getElementById('csend');
+  if (btn.getAttribute('aria-disabled') === 'true') return;
+  const text = input.value.trim();
+  if (!text) { input.setAttribute('aria-invalid', 'true'); document.getElementById('ctext-err').hidden = false; input.focus(); return; }
   const name = nameEl.value.trim() || '匿名';
   saveName(nameEl.value.trim());
-  submitEl.setAttribute('aria-disabled', 'true');
-  submitEl.querySelector('span').textContent = '送信中';
-  hideError(itemId, 'comments');
+  btn.setAttribute('aria-disabled', 'true'); btn.querySelector('span').textContent = '送信中';
+  hideErr('comments');
   const { data, error } = await db.from('comments')
-    .insert({ item_id: itemId, author: name, content: text, session_id: getSessionId() })
-    .select().single();
-  submitEl.removeAttribute('aria-disabled');
-  submitEl.querySelector('span').textContent = '送信';
-  if (error) { showError(itemId, 'comments', 'コメントを送信できませんでした。入力内容は残っています。もう一度送信してください。'); return; }
-  const listEl = document.getElementById(`cl-${itemId}`);
-  listEl.querySelector('.comments-empty, .comments-loading')?.remove();
-  appendComment(listEl, data, true);
-  updateCommentTotal(itemId);
-  inputEl.value = '';
-  inputEl.focus();
+    .insert({ item_id: itemId, author: name, content: text, session_id: getSessionId() }).select().single();
+  btn.removeAttribute('aria-disabled'); btn.querySelector('span').textContent = '送信';
+  if (error) { showErr('comments', 'コメントを送信できませんでした。入力内容は残っています。もう一度送信してください。'); return; }
+  if (state.sel !== itemId) return;
+  document.querySelector('#comments > .state')?.remove();
+  appendComment(data, true);
+  state.commentN[itemId] = (state.commentN[itemId] || 0) + 1;
+  updateTotals();
+  input.value = '';
+  input.focus();
   showToast('コメントを送信しました');
 }
 
-function appendComment(listEl, c, scroll = false) {
-  const isMine = c.session_id === getSessionId();
+function appendComment(c, scroll = false) {
+  const mine = c.session_id === getSessionId();
   const author = c.author || '匿名';
   const el = document.createElement('div');
-  el.className = 'comment';
+  el.className = 'comment' + (mine ? ' mine' : '');
   el.dataset.commentId = c.id;
   el.innerHTML = `
-    <div class="c-head">
-      <span class="c-name${isMine ? ' mine' : ''}">${escHtml(author)}</span>
-      <span class="c-time">${formatTime(c.created_at)}</span>
-      <span class="c-edited" style="display:none">編集済み</span>
-      ${isMine ? `<span class="c-actions">
-        <button class="btn-text" onclick="startEdit(this)">${ic('pencil')}編集</button>
-        <button class="btn-text" onclick="deleteComment(this)">${ic('trash-2')}削除</button>
-      </span>` : ''}
-    </div>
-    <p class="c-text"></p>
-    <div class="comment-edit-area">
-      <label class="sr-only" for="ce-${c.id}">コメントを編集</label>
-      <textarea class="field" id="ce-${c.id}"></textarea>
-      <div class="edit-actions">
-        <button class="btn outline" onclick="cancelEdit(this)">キャンセル</button>
-        <button class="btn" onclick="saveEdit(this)">保存</button>
+    <span class="avatar" aria-hidden="true">${escHtml([...author][0] || '匿')}</span>
+    <div>
+      <div class="c-head">
+        <span class="c-name">${escHtml(author)}</span>${mine ? '<span class="c-you">あなた</span>' : ''}
+        <span class="c-time">${formatTime(c.created_at)}</span>
+        <span class="c-edited" hidden>編集済み</span>
+        ${mine ? `<span class="c-actions">
+          <button class="btn-text" onclick="startEdit(this)">${ic('pencil')}編集</button>
+          <button class="btn-text danger" onclick="deleteComment(this)">${ic('trash-2')}削除</button></span>` : ''}
+      </div>
+      <p class="c-text"></p>
+      <div class="c-edit">
+        <label class="sr-only" for="ce-${c.id}">コメントを編集</label>
+        <textarea class="field" id="ce-${c.id}"></textarea>
+        <div class="row"><button class="btn outline sm" onclick="cancelEdit(this)">キャンセル</button><button class="btn sm" onclick="saveEdit(this)">保存</button></div>
       </div>
     </div>`;
   el.querySelector('.c-text').textContent = c.content;
-  listEl.appendChild(el);
+  document.getElementById('comments').appendChild(el);
   if (scroll) el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
 }
-
 function startEdit(btn) {
-  const comment = btn.closest('.comment');
-  const ta = comment.querySelector('.comment-edit-area textarea');
-  ta.value = comment.querySelector('.c-text').textContent;
-  comment.querySelector('.c-text').style.display = 'none';
-  comment.querySelector('.c-actions').style.display = 'none';
-  comment.querySelector('.comment-edit-area').style.display = 'block';
+  const c = btn.closest('.comment');
+  const ta = c.querySelector('.c-edit textarea');
+  ta.value = c.querySelector('.c-text').textContent;
+  c.querySelector('.c-text').style.display = 'none';
+  c.querySelector('.c-actions').style.display = 'none';
+  c.querySelector('.c-edit').style.display = 'block';
   ta.focus();
 }
 function cancelEdit(btn) {
-  const comment = btn.closest('.comment');
-  comment.querySelector('.c-text').style.display = '';
-  comment.querySelector('.c-actions').style.display = '';
-  comment.querySelector('.comment-edit-area').style.display = 'none';
-  comment.querySelector('.c-actions .btn-text')?.focus();
+  const c = btn.closest('.comment');
+  c.querySelector('.c-text').style.display = '';
+  c.querySelector('.c-actions').style.display = '';
+  c.querySelector('.c-edit').style.display = 'none';
+  c.querySelector('.c-actions .btn-text')?.focus();
 }
 async function saveEdit(btn) {
-  const comment = btn.closest('.comment');
-  const ta = comment.querySelector('.comment-edit-area textarea');
-  const newContent = ta.value.trim();
-  if (!newContent) { ta.focus(); return; }
+  const c = btn.closest('.comment');
+  const ta = c.querySelector('.c-edit textarea');
+  const text = ta.value.trim();
+  if (!text) { ta.focus(); return; }
   if (btn.getAttribute('aria-disabled') === 'true') return;
   btn.setAttribute('aria-disabled', 'true'); btn.textContent = '保存中';
-  const { error } = await db.from('comments').update({ content: newContent })
-    .eq('id', comment.dataset.commentId).eq('session_id', getSessionId());
+  const { error } = await db.from('comments').update({ content: text }).eq('id', c.dataset.commentId).eq('session_id', getSessionId());
   btn.removeAttribute('aria-disabled'); btn.textContent = '保存';
   if (error) { showToast('編集を保存できませんでした。もう一度保存してください。'); return; }
-  comment.querySelector('.c-text').textContent = newContent;
-  comment.querySelector('.c-edited').style.display = '';
+  c.querySelector('.c-text').textContent = text;
+  c.querySelector('.c-edited').hidden = false;
   cancelEdit(btn);
   showToast('編集を保存しました');
 }
 async function deleteComment(btn) {
   if (!confirm('このコメントを削除しますか。')) return;
-  const comment = btn.closest('.comment');
-  const list = comment.parentElement;
-  const { error } = await db.from('comments').delete()
-    .eq('id', comment.dataset.commentId).eq('session_id', getSessionId());
+  const c = btn.closest('.comment'), itemId = state.sel;
+  const { error } = await db.from('comments').delete().eq('id', c.dataset.commentId).eq('session_id', getSessionId());
   if (error) { showToast('コメントを削除できませんでした。もう一度お試しください。'); return; }
-  comment.remove();
-  if (!list.querySelector('.comment')) list.innerHTML = '<div class="comments-empty">まだコメントはありません。</div>';
-  updateCommentTotal(list.id.slice(3));
+  c.remove();
+  state.commentN[itemId] = Math.max(0, (state.commentN[itemId] || 1) - 1);
+  if (!document.querySelector('#comments .comment')) document.getElementById('comments').innerHTML = '<p class="state">まだコメントはありません。最初の意見を書いてみてください。</p>';
+  updateTotals();
   showToast('コメントを削除しました');
 }
 
-// ─── 議事録モーダル ───
-let modalOpener = null;
+// ─── 議事録ダイアログ ───
 function toGdocEmbed(url) {
   const m = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
   return m ? `https://docs.google.com/document/d/${m[1]}/preview` : null;
@@ -856,102 +823,72 @@ function fillProse(el, text, emptyMsg) {
   el.className = 'prose' + (has ? '' : ' empty');
   el.textContent = has ? text : emptyMsg;
 }
-
-function openMinutesModal(e, itemId) {
-  e.stopPropagation();
-  const p = proposalData[itemId];
+let minutesOpener = null;
+function openMinutes(btn) {
+  const p = state.items[state.sel];
   if (!p) return;
-  modalOpener = e.currentTarget || document.activeElement;
+  minutesOpener = btn;
   document.getElementById('mm-title').textContent = p.title;
-  fillProse(document.getElementById('mm-minutes-body'), p.minutes, '議事録はまだ入力されていません。');
-  fillProse(document.getElementById('mm-summary-body'), p.summary, '要約はまだ入力されていません。');
-
-  const gdocTab  = document.getElementById('mm-gdoc-tab');
-  const gdocBody = document.getElementById('mm-gdoc-body');
-  const gdoc = (p.gdoc_url || '').trim();
-  gdocBody.innerHTML = '';
+  fillProse(document.getElementById('mm-minutes'), p.minutes, '議事録はまだ入力されていません。');
+  fillProse(document.getElementById('mm-summary'), p.summary, '要約はまだ入力されていません。');
+  const gdoc = (p.gdoc_url || '').trim(), panel = document.getElementById('mp-gdoc');
+  panel.innerHTML = '';
+  document.getElementById('mt-gdoc').hidden = !gdoc;
   if (gdoc) {
-    gdocTab.style.display = '';
     const embed = toGdocEmbed(gdoc);
     if (embed) {
       const f = document.createElement('iframe');
       f.src = embed; f.className = 'gdoc-iframe'; f.title = `${p.title} の Google ドキュメント`;
-      gdocBody.appendChild(f);
+      panel.appendChild(f);
     } else if (/^https?:\/\//.test(gdoc)) {
       const a = document.createElement('a');
-      a.href = gdoc; a.target = '_blank'; a.rel = 'noopener'; a.className = 'gdoc-link';
+      a.href = gdoc; a.target = '_blank'; a.rel = 'noopener';
       a.innerHTML = `Google ドキュメントを開く${ic('external-link')}<span class="sr-only">（新しいタブで開きます）</span>`;
-      gdocBody.appendChild(a);
+      panel.appendChild(a);
     }
-  } else {
-    gdocTab.style.display = 'none';
   }
-
-  switchMinutesTab(document.querySelector('.mtab'), 'mm-minutes');
-  document.getElementById('minutes-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  document.querySelector('.modal-close').focus();
+  minutesTab('minutes');
+  const dlg = document.getElementById('minutes');
+  dlg.showModal();
+  dlg.querySelector('.dlg-close').focus();
 }
-function closeMinutesModal() {
-  document.getElementById('minutes-modal').classList.remove('open');
-  document.body.style.overflow = '';
-  if (modalOpener && document.contains(modalOpener)) modalOpener.focus();
-  modalOpener = null;
-}
-function closeMinutesModalOutside(e) { if (e.target === e.currentTarget) closeMinutesModal(); }
-function switchMinutesTab(tab, contentId) {
-  document.querySelectorAll('.mtab').forEach(t => { t.setAttribute('aria-selected', 'false'); t.tabIndex = -1; });
-  document.querySelectorAll('.mcontent').forEach(c => c.classList.remove('active'));
-  tab.setAttribute('aria-selected', 'true'); tab.tabIndex = 0;
-  document.getElementById(contentId).classList.add('active');
-}
-document.addEventListener('keydown', e => {
-  const modal = document.getElementById('minutes-modal');
-  if (!modal.classList.contains('open')) return;
-  if (e.key === 'Escape') { closeMinutesModal(); return; }
-  if (e.key === 'Tab') {  // フォーカスをモーダル内に留める
-    const f = [...modal.querySelectorAll('button, a[href], iframe, [tabindex="0"]')]
-      .filter(el => el.offsetParent !== null && el.tabIndex !== -1);
-    if (!f.length) return;
-    const first = f[0], last = f[f.length - 1];
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-  }
-});
-
-// ─── 過去議案の検索 ───
-function filterPastProposals(query) {
-  const q = query.toLowerCase().trim();
-  const cards = document.querySelectorAll('#past-cards .card');
-  let visible = 0;
-  cards.forEach(card => {
-    const p = proposalData[card.dataset.itemId];
-    const hay = p ? `${p.title} ${p.description || ''} ${p.summary || ''}`.toLowerCase() : card.textContent.toLowerCase();
-    const match = !q || hay.includes(q);
-    card.style.display = match ? '' : 'none';
-    if (match) visible++;
+function closeMinutes() { document.getElementById('minutes').close(); }
+document.getElementById('minutes').addEventListener('close', () => { minutesOpener?.focus(); minutesOpener = null; });
+document.getElementById('minutes').addEventListener('click', e => { if (e.target === e.currentTarget) closeMinutes(); });
+function minutesTab(key) {
+  ['minutes', 'summary', 'gdoc'].forEach(k => {
+    const t = document.getElementById(`mt-${k}`);
+    t.setAttribute('aria-selected', k === key); t.tabIndex = k === key ? 0 : -1;
+    document.getElementById(`mp-${k}`).hidden = k !== key;
   });
-  const empty = document.getElementById('past-empty');
-  empty.textContent = cards.length === 0 ? 'まだ決議された議案はありません。' : '該当する議案はありません。検索語を変えてください。';
-  empty.style.display = visible === 0 ? 'flex' : 'none';
-  document.getElementById('search-clear').hidden = !query;
-  document.getElementById('past-count').textContent = q ? `${visible}件が該当` : '';
+}
+function tabKey(e) {
+  const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]:not([hidden])')];
+  const i = tabs.indexOf(document.activeElement);
+  const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+  if (i < 0 || next === undefined) return;
+  e.preventDefault();
+  const t = tabs[(next + tabs.length) % tabs.length];
+  t.focus(); t.click();
+}
+
+// ─── 検索（過去の議案） ───
+function onSearch(v) {
+  state.q = v.toLowerCase().trim();
+  document.getElementById('q-clear').hidden = !v;
+  renderList();
 }
 function clearSearch() {
-  const el = document.getElementById('past-search');
-  el.value = '';
-  filterPastProposals('');
-  el.focus();
+  const el = document.getElementById('q');
+  el.value = ''; onSearch(''); el.focus();
 }
 
 // ─── ユーティリティ ───
-function showError(itemId, type, msg) {
-  const el = document.getElementById(`err-${itemId}-${type}`);
-  if (el) { el.innerHTML = `${ic('circle-alert')}<span>${escHtml(msg)}</span>`; el.classList.add('show'); }
+function showErr(type, msg) {
+  const el = document.getElementById(`err-${type}`);
+  if (el) { el.innerHTML = `${ic('circle-alert')}<span>${escHtml(msg)}</span>`; el.hidden = false; }
 }
-function hideError(itemId, type) {
-  document.getElementById(`err-${itemId}-${type}`)?.classList.remove('show');
-}
+function hideErr(type) { const el = document.getElementById(`err-${type}`); if (el) el.hidden = true; }
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -975,12 +912,11 @@ function escHtml(s) {
 
 (() => {
   const d = new Date();
-  const el = document.getElementById('today');
-  el.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`;
-  el.dateTime = d.toISOString().slice(0, 10);
+  document.getElementById('today').textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`;
   document.querySelectorAll('[data-icon]').forEach(s => { s.outerHTML = ic(s.dataset.icon); });
 })();
-fetchProposals();
+route();
+fetchAll();
 subscribeAll();
 </script>
 </body>
