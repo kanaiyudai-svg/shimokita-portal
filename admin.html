@@ -4,274 +4,323 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理 | みんカレポータル</title>
+<meta name="color-scheme" content="light dark">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+  /* サイト制作ルールブック準拠。配色はこの案件のみ例外（クリーム地＋状態色、本人指示 2026-09-18） */
   :root {
-    --ink:   #2b2722;
-    --ink-2: #4a443c;
-    --mute:  #7b7367;
-    --faint: #aaa194;
-    --line:  #ddd4c4;
-    --line-2:#ebe4d6;
-    --tint:  #efe8d9;
-    --paper: #f8f4eb;
-    --white: #fffdf8;
-    --moss:  #4d6b53; --moss-bg:  #e2e9dc; --moss-line:  #b9cab5;
-    --ochre: #94702a; --ochre-bg: #f2e7cc; --ochre-line: #dcc68f;
-    --slate: #4c6179; --slate-bg: #e0e6ec; --slate-line: #b7c3d0;
-    --clay:  #a0553f;
+    --paper:  #f8f4eb; --white: #fffdf8; --tint: #efe8d9;
+    --ink:    #2b2722; --ink-2: #4a443c; --mute: #665f55;
+    --line:   #8a8173; --line-2: #e3dccd; --on-accent: #fffdf8;
+    --moss:  #4d6b53; --moss-bg:  #e2e9dc;
+    --ochre: #7a5a1c; --ochre-bg: #f2e7cc;
+    --slate: #4c6179; --slate-bg: #e0e6ec;
+    --clay:  #8f4633; --clay-bg:  #f6e6df;
+    --focus-in: #2b2722; --focus-out: #fffdf8;
     --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Segoe UI', sans-serif;
-    --serif: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Segoe UI', sans-serif;
+    --fs-s: .875rem; --fs-m: 1rem; --fs-l: 1.125rem; --fs-h2: 1.5rem; --fs-h1: 2rem;
+    --sp-1: 4px; --sp-2: 8px; --sp-3: 16px; --sp-4: 24px; --sp-5: 32px; --sp-6: 48px;
+    --r-s: 8px; --r-m: 12px;
+    --ease: cubic-bezier(.2, 0, 0, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #1c1a17; --white: #25221e; --tint: #2e2a25;
+      --ink: #f1ece2; --ink-2: #d6cfc2; --mute: #b1a898;
+      --line: #7d7568; --line-2: #3a3630; --on-accent: #1c1a17;
+      --moss: #9cc0a3; --moss-bg: #26332a;
+      --ochre: #d9b56a; --ochre-bg: #3a3020;
+      --slate: #a9bdd4; --slate-bg: #263040;
+      --clay: #e3957f; --clay-bg: #3a2620;
+      --focus-in: #f1ece2; --focus-out: #1c1a17;
+    }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: var(--sans); font-size: 16px; line-height: 1.7; letter-spacing: .01em;
+    font-family: var(--sans); font-size: var(--fs-m); line-height: 1.7; letter-spacing: .02em;
     color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased;
   }
-  button, input, textarea { font: inherit; color: inherit; }
+  button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
   button { cursor: pointer; background: none; border: none; }
-  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+  a { color: inherit; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--focus-in); outline-offset: 2px; box-shadow: 0 0 0 5px var(--focus-out); }
+  [hidden] { display: none !important; }
+  .ic { width: 1.25em; height: 1.25em; flex-shrink: 0; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 var(--sp-4); }
 
   /* 共通部品 */
+  .f label, .label { display: flex; align-items: baseline; gap: var(--sp-2); font-size: var(--fs-s); font-weight: 700; margin-bottom: var(--sp-1); }
+  .req { font-weight: 400; color: var(--mute); }
+  .support { font-size: var(--fs-s); color: var(--mute); margin-top: var(--sp-1); }
+  .err-text { font-size: var(--fs-s); color: var(--clay); font-weight: 700; margin-top: var(--sp-1); }
   .field {
-    width: 100%; border: none; border-bottom: 1px solid var(--line); border-radius: 0;
-    padding: 8px 0; font-size: 14px; background: transparent; outline: none; transition: border-color .15s;
+    width: 100%; min-height: 48px; padding: var(--sp-2) 12px;
+    border: 1px solid var(--line); border-radius: var(--r-s); background: var(--white);
+    transition: border-color 150ms var(--ease);
   }
+  .field:hover { border-color: var(--ink-2); }
   .field:focus { border-color: var(--ink); }
-  textarea.field { resize: vertical; line-height: 1.85; }
-  .label { display: block; font-size: 11px; letter-spacing: 0; color: var(--mute); margin-bottom: 2px; }
+  .field[aria-invalid="true"] { border-color: var(--clay); border-width: 2px; }
+  textarea.field { resize: vertical; line-height: 1.8; }
   .btn {
-    font-size: 13px; font-weight: 500; letter-spacing: 0; padding: 8px 18px;
-    border: 1px solid var(--ink); background: var(--ink); color: var(--white);
-    transition: background .15s, color .15s; white-space: nowrap;
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+    min-height: 44px; padding: 0 var(--sp-4); border-radius: var(--r-s);
+    font-size: var(--fs-m); font-weight: 700; white-space: nowrap; text-decoration: none;
+    border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
+    transition: background 150ms var(--ease), color 150ms var(--ease);
   }
-  .btn:hover { background: var(--paper); color: var(--ink); }
-  .btn:disabled { background: var(--line); border-color: var(--line); color: var(--white); cursor: default; }
-  .btn.ghost { background: var(--paper); color: var(--ink); }
-  .btn.ghost:hover { background: var(--ink); color: var(--white); }
-  .link { font-size: 12px; color: var(--mute); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
-  .link:hover { color: var(--ink); text-decoration-color: var(--ink); }
-  .link.danger:hover { color: var(--clay); text-decoration-color: var(--clay); }
-  .fb { font-size: 12px; color: var(--mute); min-height: 18px; }
+  .btn:hover { background: color-mix(in srgb, var(--ink) 88%, var(--paper)); }
+  .btn.outline { background: var(--white); color: var(--ink); }
+  .btn.outline:hover { background: var(--tint); }
+  .btn[aria-disabled="true"] { cursor: progress; }
+  .link {
+    display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px;
+    font-size: var(--fs-s); color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px;
+  }
+  .link:hover { color: var(--ink); text-decoration-thickness: 2px; }
+  .link.danger { color: var(--clay); }
+  .fb { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-s); color: var(--mute); min-height: 1.6em; }
+  .fb .ic { width: 1em; height: 1em; }
   .fb.err { color: var(--clay); font-weight: 700; }
 
+  /* 通知バナー（四辺の枠＋アイコン） */
+  .banner {
+    display: none; align-items: flex-start; gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3); border: 1px solid var(--clay); border-radius: var(--r-s);
+    background: var(--clay-bg); color: var(--clay); font-size: var(--fs-s); line-height: 1.6;
+  }
+  .banner .ic { margin-top: 1px; }
+  .banner.show { display: flex; }
+
   /* ─── ログイン ─── */
-  #login-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-  .login { width: 100%; max-width: 360px; }
-  .login .org { font-size: 12px; letter-spacing: 0; color: var(--mute); text-transform: uppercase; padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
-  .login h1 { font-family: var(--serif); font-size: 28px; font-weight: 700; letter-spacing: -.01em; margin: 22px 0 4px; }
-  .login p { font-size: 13px; color: var(--mute); margin-bottom: 28px; }
-  .login .row { margin-bottom: 18px; }
-  .login .btn { width: 100%; padding: 11px; margin-top: 8px; }
-  .login-error { display: none; margin-top: 16px; font-size: 13px; padding: 10px 14px; background: var(--tint); border-left: 2px solid var(--ink); }
-  .login-error.show { display: block; }
-  .login .back { display: inline-block; margin-top: 24px; }
+  #login-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--sp-4); }
+  .login { width: 100%; max-width: 400px; }
+  .login .org { font-size: var(--fs-s); color: var(--mute); padding-bottom: var(--sp-2); border-bottom: 1px solid var(--line); }
+  .login h1 { font-size: 1.75rem; font-weight: 700; line-height: 1.4; margin: var(--sp-4) 0 var(--sp-1); }
+  .login p { color: var(--mute); margin-bottom: var(--sp-4); }
+  .login .f { margin-bottom: var(--sp-3); }
+  .login .btn { width: 100%; margin-top: var(--sp-2); }
+  .login-error { margin-top: var(--sp-3); }
+  .login .back { margin-top: var(--sp-3); }
 
   /* ─── 管理画面 ─── */
   #admin-section { display: none; }
-  .bar { border-bottom: 1px solid var(--ink); position: sticky; top: 0; background: var(--paper); z-index: 50; }
-  .bar .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 16px; }
-  .bar .brand { font-size: 13px; font-weight: 700; letter-spacing: 0; }
-  .bar .brand span { font-weight: 400; color: var(--mute); margin-left: 10px; }
-  .bar .right { display: flex; align-items: center; gap: 18px; font-size: 12px; color: var(--mute); }
+  .bar { border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--paper); z-index: 50; }
+  .bar .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 56px; gap: var(--sp-3); }
+  .bar .brand { font-size: var(--fs-s); font-weight: 700; }
+  .bar .brand span { font-weight: 400; color: var(--mute); margin-left: var(--sp-2); }
+  .bar .right { display: flex; align-items: center; gap: var(--sp-3); font-size: var(--fs-s); color: var(--mute); }
 
-  .head { padding: 40px 0 0; }
-  .head h1 { font-family: var(--serif); font-size: 32px; font-weight: 700; letter-spacing: -.01em; }
-  .head p { font-size: 13px; color: var(--mute); margin-top: 4px; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 28px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  .stat { padding: 14px 16px; border-right: 1px solid var(--line); }
-  .stat:first-child { padding-left: 0; }
+  .head { padding: var(--sp-6) 0 0; }
+  .head h1 { font-size: var(--fs-h1); font-weight: 700; line-height: 1.4; }
+  .head p { color: var(--mute); margin-top: var(--sp-1); }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-m); background: var(--white); overflow: hidden; }
+  .stat { padding: 12px var(--sp-3); border-right: 1px solid var(--line-2); }
   .stat:last-child { border-right: none; }
-  .stat .k { font-size: 11px; letter-spacing: 0; color: var(--mute); }
-  .stat .v { font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.4; }
+  .stat dt { font-size: var(--fs-s); color: var(--mute); }
+  .stat dd { font-size: var(--fs-h2); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.4; }
 
-  .admin-error { display: none; margin-top: 20px; font-size: 13px; padding: 10px 14px; background: var(--tint); border-left: 2px solid var(--ink); }
-  .admin-error.show { display: block; }
+  .admin-error { margin-top: var(--sp-4); }
 
   /* 新規作成 */
-  .create { margin-top: 36px; border: 1px solid var(--ink); }
-  .create-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; text-align: left; }
-  .create-toggle span { font-size: 14px; font-weight: 700; letter-spacing: 0; }
-  .create-body { display: none; padding: 4px 20px 20px; border-top: 1px solid var(--line); }
+  .create { margin-top: var(--sp-5); border: 1px solid var(--ink); border-radius: var(--r-m); background: var(--white); }
+  .create-toggle { width: 100%; min-height: 56px; display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) var(--sp-4); text-align: left; font-weight: 700; }
+  .create-toggle .chev { margin-left: auto; transition: transform 200ms var(--ease); }
+  .create.open .create-toggle .chev { transform: rotate(180deg); }
+  .create-body { display: none; padding: var(--sp-1) var(--sp-4) var(--sp-4); border-top: 1px solid var(--line-2); }
   .create.open .create-body { display: block; }
-  .create-body .f { margin-top: 16px; }
-  .create-foot { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
-
-  .toggle { width: 22px; height: 22px; position: relative; flex-shrink: 0; }
-  .toggle::before, .toggle::after { content: ''; position: absolute; left: 4px; right: 4px; top: 10px; height: 1.5px; background: var(--ink); transition: transform .2s; }
-  .toggle::after { transform: rotate(90deg); }
-  .create.open .toggle::after, .proposal-card.open .pc-header .toggle::after { transform: rotate(0deg); }
+  .create-body .f { margin-top: var(--sp-3); }
+  .create-foot { display: flex; align-items: center; gap: var(--sp-3); margin-top: var(--sp-4); }
 
   /* 議案リスト */
-  .list-head { display: flex; align-items: baseline; gap: 14px; margin-top: 48px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
-  .list-head h2 { font-family: var(--serif); font-size: 22px; font-weight: 700; letter-spacing: -.005em; }
-  .list-head span { margin-left: auto; font-size: 12px; color: var(--mute); }
-  .proposals-list { counter-reset: item; }
-  .proposal-card { border-bottom: 1px solid var(--line); counter-increment: item; scroll-margin-top: 64px; }
-  .pc-header { display: grid; grid-template-columns: 40px 1fr auto; gap: 0 16px; align-items: start; padding: 20px 0; cursor: pointer; user-select: none; }
-  .pc-header:hover .pc-title { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
-  .rail { display: flex; flex-direction: column; align-items: center; gap: 5px; padding-top: 2px; }
-  .idx { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
-  .idx::before { content: counter(item, decimal-leading-zero); }
+  .list-head { display: flex; align-items: baseline; gap: var(--sp-3); margin-top: var(--sp-6); padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
+  .list-head h2 { font-size: var(--fs-h2); font-weight: 700; line-height: 1.4; }
+  .list-head span { margin-left: auto; font-size: var(--fs-s); color: var(--mute); font-variant-numeric: tabular-nums; }
+  .proposal-card { border-bottom: 1px solid var(--line-2); scroll-margin-top: 64px; }
+  .pc-header { display: grid; grid-template-columns: 40px 1fr 44px; gap: 0 var(--sp-3); align-items: start; padding: var(--sp-4) 0 var(--sp-3); cursor: pointer; }
+  .pc-toggle { display: block; width: 100%; min-height: 44px; text-align: left; font-size: var(--fs-l); font-weight: 700; line-height: 1.5; }
+  .pc-header:hover .pc-toggle { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+  .rail { padding-top: 2px; }
+  .chev-box { display: grid; place-items: center; width: 44px; height: 44px; }
+  .chev-box .ic { transition: transform 200ms var(--ease); }
+  .proposal-card.open .chev-box .ic { transform: rotate(180deg); }
 
   /* 議案アイコン。色は状態に連動 */
   .icon { width: 36px; height: 36px; display: block; }
   .icon .fig { fill: var(--ink-2); }
-  .icon .bub { fill: var(--accent-bg, var(--tint)); stroke: var(--accent, var(--faint)); stroke-width: 2.4; stroke-linejoin: round; }
+  .icon .bub { fill: var(--accent-bg, var(--tint)); stroke: var(--accent, var(--line)); stroke-width: 2.4; stroke-linejoin: round; }
   .proposal-card[data-status="議論中"]      { --accent: var(--moss);  --accent-bg: var(--moss-bg);  }
   .proposal-card[data-status="取り上げ確定"] { --accent: var(--ochre); --accent-bg: var(--ochre-bg); }
   .proposal-card[data-status="決議済み"]    { --accent: var(--slate); --accent-bg: var(--slate-bg); }
   .proposal-card[data-status="議論中"] .icon .fig,
   .proposal-card[data-status="取り上げ確定"] .icon .fig,
   .proposal-card[data-status="決議済み"] .icon .fig { fill: var(--accent); }
-  .pc-title { font-size: 17px; font-weight: 600; line-height: 1.5; }
-  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; font-size: 12px; color: var(--mute); }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); font-size: var(--fs-s); color: var(--mute); }
   .meta time { font-variant-numeric: tabular-nums; }
-  .status { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0; padding: 2px 8px; line-height: 1.6; border: 1px solid var(--ink); }
-  .s-active   { background: var(--moss); border-color: var(--moss); color: var(--white); }
-  .s-adopted  { background: var(--ochre-bg); border-color: var(--ochre-line); color: var(--ochre); }
-  .s-pending  { border-color: var(--line); color: var(--mute); }
-  .s-resolved { background: var(--slate-bg); border-color: var(--slate-line); color: var(--slate); }
-  .hidden-tag { font-size: 11px; letter-spacing: 0; color: var(--clay); border: 1px dashed var(--clay); padding: 1px 7px; }
+  .status {
+    display: inline-flex; align-items: center; font-size: var(--fs-s); font-weight: 700; line-height: 1.3;
+    padding: 2px var(--sp-2); border: 1px solid var(--line); border-radius: var(--r-s); color: var(--mute); background: var(--paper);
+  }
+  .s-active   { background: var(--moss); border-color: var(--moss); color: var(--on-accent); }
+  .s-adopted  { background: var(--ochre-bg); border-color: var(--ochre); color: var(--ochre); }
+  .s-resolved { background: var(--slate-bg); border-color: var(--slate); color: var(--slate); }
+  .hidden-tag { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-s); font-weight: 700; color: var(--clay); border: 1px dashed var(--clay); border-radius: var(--r-s); padding: 1px var(--sp-2); }
+  .hidden-tag .ic { width: 1em; height: 1em; }
 
-  .pc-body { display: none; padding: 0 0 28px 60px; }
+  .pc-body { display: none; padding: 0 0 var(--sp-5) 56px; }
   .proposal-card.open .pc-body { display: block; }
-  .block { padding: 20px 0; border-top: 1px solid var(--line-2); }
+  .block { padding: var(--sp-4) 0; border-top: 1px solid var(--line-2); }
   .block:first-child { border-top: none; padding-top: 0; }
-  .block-title { font-size: 11px; letter-spacing: 0; color: var(--mute); margin-bottom: 10px; }
-  .prose { font-size: 14px; line-height: 1.9; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
-  .prose.empty { color: var(--faint); }
+  .block-title { font-size: var(--fs-s); font-weight: 700; color: var(--mute); margin-bottom: var(--sp-2); }
+  .prose { line-height: 1.9; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; max-width: 40em; }
+  .prose.empty { color: var(--mute); }
 
-  /* ステータス切替（区切られた選択肢） */
-  .seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--ink); }
-  .seg button { padding: 10px 8px; font-size: 13px; border-right: 1px solid var(--ink); transition: background .15s, color .15s; }
+  /* ステータス切替（セグメント。選択はチェック＋塗り） */
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--ink); border-radius: var(--r-s); overflow: hidden; }
+  .seg button {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-1);
+    min-height: 48px; padding: 0 var(--sp-2); border-right: 1px solid var(--ink);
+    transition: background 150ms var(--ease), color 150ms var(--ease);
+  }
   .seg button:last-child { border-right: none; }
   .seg button:hover { background: var(--tint); }
-  .seg button.selected { background: var(--ink); color: var(--white); font-weight: 700; }
-  .seg button.selected[data-key="提案中"]      { background: var(--mute); }
-  .seg button.selected[data-key="取り上げ確定"] { background: var(--ochre); }
-  .seg button.selected[data-key="議論中"]      { background: var(--moss); }
-  .seg button.selected[data-key="決議済み"]    { background: var(--slate); }
-  .seg button:disabled { cursor: default; }
-  .seg-note { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 12px; color: var(--faint); }
+  .seg button .ic { width: 1em; height: 1em; display: none; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); font-weight: 700; }
+  .seg button[aria-pressed="true"] .ic { display: inline; }
+  .seg button[aria-pressed="true"][data-key="取り上げ確定"] { background: var(--ochre); color: var(--on-accent); }
+  .seg button[aria-pressed="true"][data-key="議論中"]      { background: var(--moss);  color: var(--on-accent); }
+  .seg button[aria-pressed="true"][data-key="決議済み"]    { background: var(--slate); color: var(--on-accent); }
+  .seg[aria-busy="true"] button { cursor: progress; }
+  .seg-note { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--sp-1) var(--sp-3); margin-top: var(--sp-2); font-size: var(--fs-s); color: var(--mute); }
 
-  .fields { display: grid; gap: 18px; }
-  .save-row { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+  .fields { display: grid; gap: var(--sp-3); }
+  .save-row { display: flex; align-items: center; gap: var(--sp-3); margin-top: var(--sp-3); }
 
-  .actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-  .pub { display: flex; align-items: center; gap: 12px; font-size: 13px; }
-  .switch { width: 40px; height: 22px; border: 1px solid var(--ink); position: relative; transition: background .15s; flex-shrink: 0; }
-  .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; background: var(--ink); transition: transform .15s, background .15s; }
+  .actions { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; }
+  .pub { display: flex; align-items: center; gap: 12px; }
+  .switch {
+    width: 52px; height: 32px; border: 2px solid var(--line); border-radius: 16px; position: relative; flex-shrink: 0;
+    background: var(--tint); transition: background 150ms var(--ease), border-color 150ms var(--ease);
+  }
+  .switch::before { content: ''; position: absolute; inset: -8px -2px; }  /* 当たり判定を48pxに */
+  .switch::after {
+    content: ''; position: absolute; top: 6px; left: 6px; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--line); transition: transform 150ms var(--ease), background 150ms var(--ease);
+  }
   .switch.on { background: var(--moss); border-color: var(--moss); }
-  .switch.on::after { transform: translateX(18px); background: var(--paper); }
-  .actions .right { display: flex; gap: 18px; }
+  .switch.on::after { transform: translateX(20px); width: 20px; height: 20px; top: 4px; left: 4px; background: var(--on-accent); }
+  .switch[aria-busy="true"] { cursor: progress; }
+  .pub-label { font-size: var(--fs-s); }
+  .actions .right { display: flex; gap: var(--sp-3); }
 
-  .inline-edit { display: none; margin-top: 18px; padding: 20px; background: var(--tint); }
-  .inline-edit .f + .f { margin-top: 16px; }
-  .inline-edit .foot { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .inline-edit { display: none; margin-top: var(--sp-3); padding: var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-m); background: var(--white); }
+  .inline-edit .f + .f { margin-top: var(--sp-3); }
+  .inline-edit .foot { display: flex; gap: var(--sp-2); justify-content: flex-end; margin-top: var(--sp-4); }
 
-  .sp { display: inline-block; width: 10px; height: 10px; border: 1.5px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: -1px; margin-right: 6px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .state { padding: 28px 0; font-size: 13px; color: var(--faint); }
+  .state { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-5) 0; color: var(--mute); }
 
   #toast {
-    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 8px);
-    background: var(--ink); color: var(--white); font-size: 13px; padding: 10px 20px;
-    z-index: 300; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100vw - 32px);
+    position: fixed; left: 50%; bottom: var(--sp-4); transform: translate(-50%, 8px);
+    background: var(--ink); color: var(--paper); font-size: var(--fs-s); padding: 12px var(--sp-4); border-radius: var(--r-s);
+    z-index: 300; opacity: 0; pointer-events: none; transition: opacity 200ms var(--ease), transform 200ms var(--ease); max-width: calc(100vw - 32px);
   }
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-  @media (max-width: 640px) {
-    .wrap { padding: 0 16px; }
+  @media (max-width: 767px) {
+    .wrap { padding: 0 var(--sp-3); }
     .bar .brand span, #user-email { display: none; }
     .stats { grid-template-columns: repeat(2, 1fr); }
     .stat:nth-child(2) { border-right: none; }
-    .stat:nth-child(3) { padding-left: 0; }
-    .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
-    .pc-header { grid-template-columns: 34px 1fr auto; }
+    .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line-2); }
+    .pc-header { grid-template-columns: 32px 1fr 44px; }
     .icon { width: 32px; height: 32px; }
     .pc-body { padding-left: 0; }
     .seg { grid-template-columns: repeat(2, 1fr); }
     .seg button:nth-child(2) { border-right: none; }
     .seg button:nth-child(-n+2) { border-bottom: 1px solid var(--ink); }
+    .create-toggle, .create-body { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+    .inline-edit { padding: var(--sp-3); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
   }
 </style>
 </head>
 <body>
 
 <div id="login-section">
-  <div class="login">
+  <main class="login">
     <div class="org">Shimokita College</div>
     <h1>管理者ログイン</h1>
     <p>議案の作成・状態変更・議事録の入力を行います。</p>
-    <form onsubmit="handleLogin(event)">
-      <div class="row">
-        <label class="label" for="email">メールアドレス</label>
+    <form onsubmit="handleLogin(event)" novalidate>
+      <div class="f">
+        <label for="email">メールアドレス<span class="req">※必須</span></label>
         <input class="field" type="email" id="email" required autocomplete="email">
       </div>
-      <div class="row">
-        <label class="label" for="password">パスワード</label>
+      <div class="f">
+        <label for="password">パスワード<span class="req">※必須</span></label>
         <input class="field" type="password" id="password" required autocomplete="current-password">
       </div>
       <button type="submit" class="btn" id="login-btn">ログイン</button>
     </form>
-    <div class="login-error" id="login-error"></div>
+    <div class="banner login-error" id="login-error"></div>
     <a href="index.html" class="link back">ポータルに戻る</a>
-  </div>
+  </main>
 </div>
 
 <div id="admin-section">
-  <div class="bar">
+  <header class="bar">
     <div class="wrap">
       <div class="brand">みんカレポータル<span>管理</span></div>
-      <div class="right">
+      <nav class="right" aria-label="アカウント">
         <a href="index.html" class="link">ポータルを見る</a>
         <span id="user-email"></span>
-        <button class="link" onclick="handleLogout()">ログアウト</button>
-      </div>
+        <button class="link" onclick="handleLogout()"><span data-icon="log-out"></span>ログアウト</button>
+      </nav>
     </div>
-  </div>
+  </header>
 
   <main class="wrap">
     <div class="head">
       <h1>議案の管理</h1>
       <p>議案を選ぶと、状態の変更・議事録の入力・公開設定ができます。変更はポータルに即時反映されます。</p>
-      <div class="stats">
-        <div class="stat"><div class="k">検討中</div><div class="v" id="st-提案中">-</div></div>
-        <div class="stat"><div class="k">採択予定</div><div class="v" id="st-取り上げ確定">-</div></div>
-        <div class="stat"><div class="k">審議中</div><div class="v" id="st-議論中">-</div></div>
-        <div class="stat"><div class="k">決議済み</div><div class="v" id="st-決議済み">-</div></div>
-      </div>
+      <dl class="stats">
+        <div class="stat"><dt>検討中</dt><dd id="st-提案中">-</dd></div>
+        <div class="stat"><dt>採択予定</dt><dd id="st-取り上げ確定">-</dd></div>
+        <div class="stat"><dt>審議中</dt><dd id="st-議論中">-</dd></div>
+        <div class="stat"><dt>決議済み</dt><dd id="st-決議済み">-</dd></div>
+      </dl>
     </div>
 
-    <div class="admin-error" id="admin-error"></div>
+    <div class="banner admin-error" id="admin-error"></div>
 
     <div class="create" id="create">
-      <button class="create-toggle" onclick="toggleCreate()" aria-expanded="false" id="create-toggle">
-        <span>新しい議案を作成</span><span class="toggle" aria-hidden="true"></span>
+      <button class="create-toggle" onclick="toggleCreate()" aria-expanded="false" aria-controls="create-body" id="create-toggle">
+        <span data-icon="plus"></span>新しい議案を作成<span class="chev" data-icon="chevron-down"></span>
       </button>
-      <div class="create-body">
+      <div class="create-body" id="create-body">
         <div class="f">
-          <label class="label" for="new-title">タイトル</label>
-          <input class="field" type="text" id="new-title">
+          <label for="new-title">タイトル<span class="req">※必須</span></label>
+          <input class="field" type="text" id="new-title" aria-describedby="new-title-err" oninput="clearFieldError(this)">
+          <p class="err-text" id="new-title-err" hidden>＊タイトルを入力してください。</p>
         </div>
         <div class="f">
-          <label class="label" for="new-desc">内容・背景</label>
+          <label for="new-desc">内容・背景<span class="req">※任意</span></label>
           <textarea class="field" id="new-desc" rows="4"></textarea>
         </div>
         <div class="create-foot">
           <button class="btn" id="create-btn" onclick="createProposal()">作成する</button>
-          <span class="fb" id="create-fb"></span>
+          <span class="fb" id="create-fb" role="status"></span>
         </div>
       </div>
     </div>
 
     <div class="list-head"><h2>議案一覧</h2><span id="list-count"></span></div>
-    <div id="proposals-container"><div class="state">読み込み中</div></div>
+    <div id="proposals-container"><div class="state"><span data-icon="hourglass"></span>議案を読み込んでいます</div></div>
   </main>
 </div>
 
@@ -281,6 +330,23 @@
 const SUPABASE_URL  = 'https://ggdjoxnjwqthhkwpcvqq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZGpveG5qd3F0aGhrd3BjdnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTYyNjIsImV4cCI6MjA5MzczMjI2Mn0.X1AvGI5I8I94siB6MS1B_ou9TlA5864wUNsuy6SK4bc';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Lucide アイコン（lucide.dev の SVG パスをそのまま使用）
+const LUCIDE = {
+  'chevron-down': '<path d="m6 9 6 6 6-6"/>',
+  'plus':         '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  'check':        '<path d="M20 6 9 17l-5-5"/>',
+  'hourglass':    '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  'circle-alert': '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  'circle-check': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  'pencil':       '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  'trash-2':      '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  'eye-off':      '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  'log-out':      '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+};
+function ic(name) {
+  return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${LUCIDE[name]}</svg>`;
+}
 
 const AGENDA_ICON = `
 <svg class="icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
@@ -320,19 +386,28 @@ function showAdmin(user) {
   document.getElementById('user-email').textContent = user?.email || '';
   if (!adminShown) { adminShown = true; fetchProposals(); }
 }
+function showBanner(el, msg) {
+  el.innerHTML = `${ic('circle-alert')}<span>${escHtml(msg)}</span>`;
+  el.classList.add('show');
+}
 async function handleLogin(e) {
   e.preventDefault();
   const btn = document.getElementById('login-btn');
   const err = document.getElementById('login-error');
-  btn.disabled = true; btn.textContent = 'ログイン中'; err.classList.remove('show');
-  const { error } = await db.auth.signInWithPassword({
-    email: document.getElementById('email').value.trim(),
-    password: document.getElementById('password').value,
-  });
+  if (btn.getAttribute('aria-disabled') === 'true') return;
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  err.classList.remove('show');
+  if (!email || !password) {
+    showBanner(err, 'メールアドレスとパスワードを入力してください。');
+    document.getElementById(email ? 'password' : 'email').focus();
+    return;
+  }
+  btn.setAttribute('aria-disabled', 'true'); btn.textContent = 'ログイン中';
+  const { error } = await db.auth.signInWithPassword({ email, password });
   if (error) {
-    err.textContent = 'ログインに失敗しました。メールアドレスとパスワードを確認してください。';
-    err.classList.add('show');
-    btn.disabled = false; btn.textContent = 'ログイン';
+    showBanner(err, 'ログインできませんでした。メールアドレスとパスワードを確認してください。');
+    btn.removeAttribute('aria-disabled'); btn.textContent = 'ログイン';
   }
 }
 async function handleLogout() { adminShown = false; await db.auth.signOut(); }
@@ -340,19 +415,17 @@ async function handleLogout() { adminShown = false; await db.auth.signOut(); }
 // ─── データ取得 ───
 async function fetchProposals() {
   const container = document.getElementById('proposals-container');
-  container.innerHTML = '<div class="state">読み込み中</div>';
+  container.innerHTML = `<div class="state">${ic('hourglass')}議案を読み込んでいます</div>`;
   const { data, error } = await db.from('proposals').select('*')
     .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
   if (error) {
-    const el = document.getElementById('admin-error');
-    el.textContent = 'データの取得に失敗しました：' + error.message;
-    el.classList.add('show');
+    showBanner(document.getElementById('admin-error'), 'データを取得できませんでした：' + error.message);
     container.innerHTML = '';
     return;
   }
   container.innerHTML = '';
   if (!data || data.length === 0) {
-    container.innerHTML = '<div class="state">議案はまだ登録されていません。</div>';
+    container.innerHTML = '<div class="state">議案はまだ登録されていません。上の「新しい議案を作成」から追加できます。</div>';
   } else {
     const list = document.createElement('div');
     list.className = 'proposals-list';
@@ -382,60 +455,62 @@ function buildCard(p) {
   const summary = (p.summary || '').trim();
 
   const segBtns = STATUSES.map(s => `
-    <button class="${s.key === p.status ? 'selected' : ''}" data-key="${s.key}" title="${s.desc}"
-      onclick="changeStatus('${p.id}','${s.key}',this)">${s.label}</button>`).join('');
+    <button data-key="${s.key}" aria-pressed="${s.key === p.status}"
+      onclick="changeStatus('${p.id}','${s.key}',this)">${ic('check')}${s.label}</button>`).join('');
 
   wrap.innerHTML = `
-    <div class="pc-header" role="button" tabindex="0" aria-expanded="false"
-         onclick="toggleCard(this.parentElement)" onkeydown="rowKey(event,this.parentElement)">
-      <span class="rail">${AGENDA_ICON}<span class="idx"></span></span>
+    <div class="pc-header" onclick="toggleCard(this.parentElement)">
+      <span class="rail">${AGENDA_ICON}</span>
       <div>
-        <h3 class="pc-title">${escHtml(p.title)}</h3>
+        <h3><button class="pc-toggle pc-title" aria-expanded="false" aria-controls="pcb-${p.id}">${escHtml(p.title)}</button></h3>
         <div class="meta">
           <span class="status ${st.cls}" id="badge-${p.id}">${st.label}</span>
-          <span class="hidden-tag" id="htag-${p.id}" style="${isPublished ? 'display:none' : ''}">非公開</span>
-          ${p.created_at ? `<time>${fmtDate(p.created_at)}</time>` : ''}
+          <span class="hidden-tag" id="htag-${p.id}" style="${isPublished ? 'display:none' : ''}">${ic('eye-off')}非公開</span>
+          ${p.created_at ? `<time datetime="${p.created_at}">${fmtDate(p.created_at)}</time>` : ''}
         </div>
       </div>
-      <span class="toggle" aria-hidden="true"></span>
+      <span class="chev-box" aria-hidden="true">${ic('chevron-down')}</span>
     </div>
 
-    <div class="pc-body">
+    <div class="pc-body" id="pcb-${p.id}">
       <div class="block">
-        <div class="block-title">提案内容</div>
+        <h4 class="block-title">提案内容</h4>
         <div class="prose${desc ? '' : ' empty'}" id="pdesc-${p.id}">${desc ? escHtml(desc) : '記載なし'}</div>
       </div>
 
       <div class="block">
-        <div class="block-title">要約</div>
+        <h4 class="block-title">要約</h4>
         <div class="prose${summary ? '' : ' empty'}" id="psum-${p.id}">${summary ? escHtml(summary) : 'まだ入力されていません'}</div>
       </div>
 
       <div class="block">
-        <div class="block-title">状態</div>
-        <div class="seg" id="seg-${p.id}">${segBtns}</div>
-        <div class="seg-note"><span id="sdesc-${p.id}">${st.desc}</span><span class="fb" id="sfb-${p.id}"></span></div>
+        <h4 class="block-title" id="segl-${p.id}">状態</h4>
+        <div class="seg" id="seg-${p.id}" role="group" aria-labelledby="segl-${p.id}">${segBtns}</div>
+        <div class="seg-note"><span id="sdesc-${p.id}">${st.desc}</span><span class="fb" id="sfb-${p.id}" role="status"></span></div>
       </div>
 
       <div class="block">
-        <div class="block-title">議事録</div>
+        <h4 class="block-title">議事録</h4>
         <div class="fields">
-          <div>
-            <label class="label" for="mbody-${p.id}">議事録（本文）</label>
-            <textarea class="field" id="mbody-${p.id}" rows="6" placeholder="会議での議論の経過や決定事項">${escHtml(p.minutes || '')}</textarea>
+          <div class="f">
+            <label for="mbody-${p.id}">議事録（本文）<span class="req">※任意</span></label>
+            <textarea class="field" id="mbody-${p.id}" rows="6" aria-describedby="mbody-h-${p.id}">${escHtml(p.minutes || '')}</textarea>
+            <p class="support" id="mbody-h-${p.id}">会議での議論の経過や決定事項</p>
           </div>
-          <div>
-            <label class="label" for="msum-${p.id}">要約（ポータルの議事録画面に表示）</label>
-            <textarea class="field" id="msum-${p.id}" rows="3" placeholder="3〜5行程度のまとめ">${escHtml(summary)}</textarea>
+          <div class="f">
+            <label for="msum-${p.id}">要約<span class="req">※任意</span></label>
+            <textarea class="field" id="msum-${p.id}" rows="3" aria-describedby="msum-h-${p.id}">${escHtml(summary)}</textarea>
+            <p class="support" id="msum-h-${p.id}">3〜5行程度。ポータルの議事録画面に表示されます</p>
           </div>
-          <div>
-            <label class="label" for="mgdoc-${p.id}">Google ドキュメントの URL（任意）</label>
-            <input class="field" type="url" id="mgdoc-${p.id}" placeholder="https://docs.google.com/document/d/..." value="${escHtml(p.gdoc_url || '')}">
+          <div class="f">
+            <label for="mgdoc-${p.id}">Google ドキュメントの URL<span class="req">※任意</span></label>
+            <input class="field" type="url" inputmode="url" id="mgdoc-${p.id}" aria-describedby="mgdoc-h-${p.id}" value="${escHtml(p.gdoc_url || '')}">
+            <p class="support" id="mgdoc-h-${p.id}">例：https://docs.google.com/document/d/...</p>
           </div>
         </div>
         <div class="save-row">
           <button class="btn" id="msbtn-${p.id}" onclick="saveMinutes('${p.id}')">議事録を保存</button>
-          <span class="fb" id="msfb-${p.id}"></span>
+          <span class="fb" id="msfb-${p.id}" role="status"></span>
         </div>
       </div>
 
@@ -443,25 +518,26 @@ function buildCard(p) {
         <div class="actions">
           <div class="pub">
             <button class="switch ${isPublished ? 'on' : ''}" id="pub-${p.id}" role="switch" aria-checked="${isPublished}"
-              aria-label="ポータルに公開" onclick="togglePublish('${p.id}',this)"></button>
-            <span id="publabel-${p.id}">${isPublished ? 'ポータルに公開中' : '非公開（ポータルに表示されません）'}</span>
+              aria-labelledby="publabel-${p.id}" onclick="togglePublish('${p.id}',this)"></button>
+            <span class="pub-label" id="publabel-${p.id}">${isPublished ? 'ポータルに公開中' : '非公開（ポータルに表示されません）'}</span>
           </div>
           <div class="right">
-            <button class="link" onclick="startEdit('${p.id}')">タイトル・内容を編集</button>
-            <button class="link danger" onclick="deleteProposal('${p.id}')">削除</button>
+            <button class="link" onclick="startEdit('${p.id}')">${ic('pencil')}タイトル・内容を編集</button>
+            <button class="link danger" onclick="deleteProposal('${p.id}')">${ic('trash-2')}削除</button>
           </div>
         </div>
         <div class="inline-edit" id="iedit-${p.id}">
           <div class="f">
-            <label class="label" for="ietitle-${p.id}">タイトル</label>
-            <input class="field" type="text" id="ietitle-${p.id}" value="${escHtml(p.title)}">
+            <label for="ietitle-${p.id}">タイトル<span class="req">※必須</span></label>
+            <input class="field" type="text" id="ietitle-${p.id}" value="${escHtml(p.title)}" aria-describedby="ietitle-err-${p.id}" oninput="clearFieldError(this)">
+            <p class="err-text" id="ietitle-err-${p.id}" hidden>＊タイトルを入力してください。</p>
           </div>
           <div class="f">
-            <label class="label" for="iedesc-${p.id}">内容・背景</label>
+            <label for="iedesc-${p.id}">内容・背景<span class="req">※任意</span></label>
             <textarea class="field" id="iedesc-${p.id}" rows="4">${escHtml(p.description || '')}</textarea>
           </div>
           <div class="foot">
-            <button class="btn ghost" onclick="cancelEdit('${p.id}')">キャンセル</button>
+            <button class="btn outline" onclick="cancelEdit('${p.id}')">キャンセル</button>
             <button class="btn" id="iesave-${p.id}" onclick="saveEdit('${p.id}')">変更を保存</button>
           </div>
         </div>
@@ -470,30 +546,39 @@ function buildCard(p) {
   return wrap;
 }
 
+// 行のどこを押しても開閉する。操作の実体は見出し内のボタン
 function toggleCard(card) {
   const open = card.classList.toggle('open');
-  card.querySelector('.pc-header').setAttribute('aria-expanded', open);
-}
-function rowKey(e, card) {
-  if (e.target !== e.currentTarget) return;
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCard(card); }
+  card.querySelector('.pc-toggle').setAttribute('aria-expanded', open);
 }
 function setFb(el, html, cls = '') { el.innerHTML = html; el.className = 'fb' + (cls ? ' ' + cls : ''); }
 function flashDone(el, msg) {
-  setFb(el, msg);
-  clearTimeout(el._t); el._t = setTimeout(() => setFb(el, ''), 2500);
+  setFb(el, `${ic('circle-check')}${escHtml(msg)}`);
+  clearTimeout(el._t); el._t = setTimeout(() => setFb(el, ''), 5000);
+}
+const SAVING = () => `${ic('hourglass')}保存中`;
+function showFieldError(input) {
+  input.setAttribute('aria-invalid', 'true');
+  document.getElementById(input.getAttribute('aria-describedby')).hidden = false;
+  input.focus();
+}
+function clearFieldError(input) {
+  input.removeAttribute('aria-invalid');
+  document.getElementById(input.getAttribute('aria-describedby')).hidden = true;
 }
 
 // ─── 状態変更 ───
 async function changeStatus(id, newStatus, btn) {
-  if (btn.classList.contains('selected')) return;
+  if (btn.getAttribute('aria-pressed') === 'true') return;
   const card = document.querySelector(`.proposal-card[data-id="${id}"]`);
-  const btns = card.querySelectorAll(`#seg-${id} button`);
+  const seg  = document.getElementById(`seg-${id}`);
+  if (seg.getAttribute('aria-busy') === 'true') return;
+  const btns = seg.querySelectorAll('button');
   const prev = card.dataset.status;
   const fb = document.getElementById(`sfb-${id}`);
   const apply = key => {
     const s = STATUS_BY_KEY[key];
-    btns.forEach(b => b.classList.toggle('selected', b.dataset.key === key));
+    btns.forEach(b => b.setAttribute('aria-pressed', b.dataset.key === key));
     const badge = document.getElementById(`badge-${id}`);
     badge.className = `status ${s.cls}`; badge.textContent = s.label;
     document.getElementById(`sdesc-${id}`).textContent = s.desc;
@@ -501,12 +586,12 @@ async function changeStatus(id, newStatus, btn) {
     updateStats();
   };
   apply(newStatus);
-  btns.forEach(b => b.disabled = true);
-  setFb(fb, '<span class="sp"></span>保存中');
+  seg.setAttribute('aria-busy', 'true');
+  setFb(fb, SAVING());
   const { error } = await db.from('proposals')
     .update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
-  btns.forEach(b => b.disabled = false);
-  if (error) { apply(prev); setFb(fb, '保存に失敗しました', 'err'); return; }
+  seg.removeAttribute('aria-busy');
+  if (error) { apply(prev); setFb(fb, `${ic('circle-alert')}保存できませんでした。もう一度選んでください`, 'err'); return; }
   flashDone(fb, '保存しました');
   showToast(`「${STATUS_BY_KEY[newStatus].label}」に変更しました`);
 }
@@ -515,17 +600,18 @@ async function changeStatus(id, newStatus, btn) {
 async function saveMinutes(id) {
   const btn = document.getElementById(`msbtn-${id}`);
   const fb  = document.getElementById(`msfb-${id}`);
+  if (btn.getAttribute('aria-disabled') === 'true') return;
   const summary = document.getElementById(`msum-${id}`).value;
-  btn.disabled = true;
-  setFb(fb, '<span class="sp"></span>保存中');
+  btn.setAttribute('aria-disabled', 'true');
+  setFb(fb, SAVING());
   const { error } = await db.from('proposals').update({
     minutes:    document.getElementById(`mbody-${id}`).value,
     summary,
     gdoc_url:   document.getElementById(`mgdoc-${id}`).value.trim(),
     updated_at: new Date().toISOString(),
   }).eq('id', id);
-  btn.disabled = false;
-  if (error) { setFb(fb, '保存に失敗しました：' + escHtml(error.message), 'err'); return; }
+  btn.removeAttribute('aria-disabled');
+  if (error) { setFb(fb, `${ic('circle-alert')}保存できませんでした：${escHtml(error.message)}`, 'err'); return; }
   const sumEl = document.getElementById(`psum-${id}`);
   sumEl.className = 'prose' + (summary.trim() ? '' : ' empty');
   sumEl.textContent = summary.trim() || 'まだ入力されていません';
@@ -535,12 +621,13 @@ async function saveMinutes(id) {
 
 // ─── 公開設定 ───
 async function togglePublish(id, sw) {
+  if (sw.getAttribute('aria-busy') === 'true') return;
   const next = !sw.classList.contains('on');
-  sw.disabled = true;
+  sw.setAttribute('aria-busy', 'true');
   const { error } = await db.from('proposals')
     .update({ is_published: next, updated_at: new Date().toISOString() }).eq('id', id);
-  sw.disabled = false;
-  if (error) { showToast('公開設定の更新に失敗しました'); return; }
+  sw.removeAttribute('aria-busy');
+  if (error) { showToast('公開設定を変更できませんでした。もう一度お試しください'); return; }
   sw.classList.toggle('on', next);
   sw.setAttribute('aria-checked', next);
   document.getElementById(`publabel-${id}`).textContent = next ? 'ポータルに公開中' : '非公開（ポータルに表示されません）';
@@ -554,7 +641,7 @@ async function deleteProposal(id) {
   const title = card?.querySelector('.pc-title')?.textContent || 'この議案';
   if (!confirm(`「${title}」を削除しますか。\nこの操作は取り消せません。`)) return;
   const { error } = await db.from('proposals').delete().eq('id', id);
-  if (error) { showToast('削除に失敗しました：' + error.message); return; }
+  if (error) { showToast('削除できませんでした：' + error.message); return; }
   card?.remove();
   updateStats();
   showToast('削除しました');
@@ -568,13 +655,14 @@ async function saveEdit(id) {
   const descEl  = document.getElementById(`iedesc-${id}`);
   const btn     = document.getElementById(`iesave-${id}`);
   const title = titleEl.value.trim();
-  if (!title) { titleEl.focus(); return; }
-  btn.disabled = true; btn.textContent = '保存中';
+  if (!title) { showFieldError(titleEl); return; }
+  if (btn.getAttribute('aria-disabled') === 'true') return;
+  btn.setAttribute('aria-disabled', 'true'); btn.textContent = '保存中';
   const desc = descEl.value.trim();
   const { error } = await db.from('proposals')
     .update({ title, description: desc, updated_at: new Date().toISOString() }).eq('id', id);
-  btn.disabled = false; btn.textContent = '変更を保存';
-  if (error) { showToast('編集に失敗しました'); return; }
+  btn.removeAttribute('aria-disabled'); btn.textContent = '変更を保存';
+  if (error) { showToast('変更を保存できませんでした。もう一度お試しください'); return; }
   const card = document.querySelector(`.proposal-card[data-id="${id}"]`);
   card.querySelector('.pc-title').textContent = title;
   const d = document.getElementById(`pdesc-${id}`);
@@ -597,15 +685,16 @@ async function createProposal() {
   const btn = document.getElementById('create-btn');
   const fb  = document.getElementById('create-fb');
   const title = titleEl.value.trim();
-  if (!title) { titleEl.focus(); setFb(fb, 'タイトルを入力してください', 'err'); return; }
-  btn.disabled = true; btn.textContent = '作成中';
+  if (!title) { showFieldError(titleEl); return; }
+  if (btn.getAttribute('aria-disabled') === 'true') return;
+  btn.setAttribute('aria-disabled', 'true'); btn.textContent = '作成中';
   const itemId = typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
   const { error } = await db.from('proposals').insert({
     item_id: itemId, title, description: descEl.value.trim(), status: '提案中', is_published: true,
   });
-  btn.disabled = false; btn.textContent = '作成する';
-  if (error) { setFb(fb, '作成に失敗しました：' + escHtml(error.message), 'err'); return; }
+  btn.removeAttribute('aria-disabled'); btn.textContent = '作成する';
+  if (error) { setFb(fb, `${ic('circle-alert')}作成できませんでした：${escHtml(error.message)}`, 'err'); return; }
   titleEl.value = ''; descEl.value = '';
   flashDone(fb, '作成しました');
   fetchProposals();
@@ -615,7 +704,7 @@ async function createProposal() {
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2800);
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 5000);
 }
 function fmtDate(iso) {
   const d = new Date(iso);
@@ -625,6 +714,10 @@ function escHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+document.querySelectorAll('[data-icon]').forEach(s => {
+  const svg = ic(s.dataset.icon);
+  s.outerHTML = s.classList.contains('chev') ? svg.replace('class="ic"', 'class="ic chev"') : svg;
+});
 init();
 </script>
 </body>
