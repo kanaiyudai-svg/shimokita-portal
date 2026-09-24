@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/dist/umd/supabase.js" integrity="sha384-K1nraABOP/zFehpLIUksXebbs7jMpB8gYMlb+uhVKZcWT/9Vkq1+qhv6ndC+1Yuz" crossorigin="anonymous"></script>
 <style>
   /* サイト制作ルールブック準拠。配色は DADS キーカラー（Blue）とセマンティックカラー（@digital-go-jp/design-tokens 2.0.1） */
   :root {
@@ -389,9 +389,9 @@ function renderList() {
   st.hidden = state.items.length > 0;
   if (!state.items.length) st.innerHTML = `${ic('list')}<span>議案はまだ登録されていません。「新しい議案」から追加できます。</span>`;
   document.getElementById('items').innerHTML = state.items.map(p => `
-    <li><a class="item" href="#${p.id}" ${String(p.id) === state.sel ? 'aria-current="true"' : ''}>
+    <li><a class="item" href="#${escHtml(p.id)}" ${String(p.id) === state.sel ? 'aria-current="true"' : ''}>
       <span class="item-top">${chipOf(p)}${p.is_published === false ? `<span class="chip c-hidden">${ic('eye-off')}非公開</span>` : ''}
-        ${p.created_at ? `<time class="item-date" datetime="${p.created_at}">${fmtDate(p.created_at)}</time>` : ''}</span>
+        ${p.created_at ? `<time class="item-date" datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time>` : ''}</span>
       <span class="item-title">${escHtml(p.title)}</span>
     </a></li>`).join('');
 }
@@ -405,7 +405,7 @@ function renderDetail() {
   el.innerHTML = `
     <article class="editor" aria-labelledby="ed-title">
       <a class="btn-text back" href="#">${ic('chevron-left')}一覧に戻る</a>
-      <div class="ed-top"><span id="ed-chip">${chipOf(p)}</span>${p.created_at ? `<span>提案日 <time datetime="${p.created_at}">${fmtDate(p.created_at)}</time></span>` : ''}</div>
+      <div class="ed-top"><span id="ed-chip">${chipOf(p)}</span>${p.created_at ? `<span>提案日 <time datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time></span>` : ''}</div>
       <h2 class="ed-title" id="ed-title">${escHtml(p.title)}</h2>
 
       <section class="sec" aria-labelledby="h-status">
@@ -606,7 +606,7 @@ async function createProposal() {
 // ─── ユーティリティ ───
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 5000); }
 function fmtDate(iso) { const d = new Date(iso); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; }
-function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
 document.querySelectorAll('[data-icon]').forEach(s => { s.outerHTML = ic(s.dataset.icon); });
 init();

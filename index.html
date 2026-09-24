@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/dist/umd/supabase.js" integrity="sha384-K1nraABOP/zFehpLIUksXebbs7jMpB8gYMlb+uhVKZcWT/9Vkq1+qhv6ndC+1Yuz" crossorigin="anonymous"></script>
 <style>
   /*
    * サイト制作ルールブック準拠。配色は白地＋淡い面（MD3の塗りカード風）。キーカラーは DADS Blue 700、
@@ -471,7 +471,7 @@ function route() {
   const view = VIEWS[v] ? v : 'active';
   const changedView = view !== state.view;
   state.view = view;
-  let sel = id && state.items[id] ? id : null;
+  let sel = id && Object.hasOwn(state.items, id) ? id : null;
   // 議案の状態が変わって別の分類に移っていたら、その分類へ移す
   if (sel && cfgOf(state.items[sel]).view !== view) { history.replaceState(null, '', `#${cfgOf(state.items[sel]).view}/${sel}`); return route(); }
   if (!sel && wide.matches && state.loaded) {
@@ -516,11 +516,11 @@ function renderList() {
   document.getElementById('q-clear').hidden = !state.q;
 
   document.getElementById('items').innerHTML = list.map(p => `
-    <li><a class="item" href="#${state.view}/${p.item_id}" ${p.item_id === state.sel ? 'aria-current="true"' : ''}>
+    <li><a class="item" href="#${state.view}/${escHtml(p.item_id)}" ${p.item_id === state.sel ? 'aria-current="true"' : ''}>
       <span class="item-top">${chipOf(p)}${p.status === '取り上げ確定' ? '<span class="note">次回の議題に採用</span>' : ''}</span>
       <span class="item-title">${escHtml(p.title)}</span>
       <span class="item-meta">
-        ${p.created_at ? `<span><time datetime="${p.created_at}">${fmtDate(p.created_at)}</time></span>` : ''}
+        ${p.created_at ? `<span><time datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time></span>` : ''}
         <span>${ic('thumbs-up')}反応 ${state.reactN[p.item_id] || 0}</span>
         <span>${ic('message-square')}コメント ${state.commentN[p.item_id] || 0}</span>
       </span>
@@ -586,7 +586,7 @@ function renderHead() {
   const hasMinutes = p.status === '議論中' || p.status === '決議済み';
   head.innerHTML = `
     <div class="d-top">${chipOf(p)}${p.status === '取り上げ確定' ? '<span class="note">次回の議題に採用</span>' : ''}
-      ${p.created_at ? `<span>提案日 <time datetime="${p.created_at}">${fmtDate(p.created_at)}</time></span>` : ''}</div>
+      ${p.created_at ? `<span>提案日 <time datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time></span>` : ''}</div>
     <h2 class="d-title" id="d-title">${escHtml(p.title)}</h2>
     ${p.status === '決議済み' ? `<div class="banner success">${ic('circle-check')}<span><span class="banner-title">決議済み</span>この議案は全体会議で決議されました。経過は議事録から確認できます。</span></div>` : ''}
     ${hasMinutes ? `<div class="d-actions"><button class="btn outline" onclick="openMinutes(this)">${ic('file-text')}議事録を読む</button></div>` : ''}
@@ -599,7 +599,8 @@ function renderHead() {
 // ─── データ取得 ───
 async function fetchAll() {
   const [pr, rx, cm] = await Promise.all([
-    db.from('proposals').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+    // 非公開の議案はブラウザに届く前にサーバー側で除く（本当の防御はRLS。これは多重化）
+    db.from('proposals').select('*').not('is_published', 'is', false).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
     db.from('reactions').select('item_id'),
     db.from('comments').select('item_id'),
   ]);
@@ -761,8 +762,8 @@ function appendComment(c, scroll = false) {
       </div>
       <p class="c-text"></p>
       <div class="c-edit">
-        <label class="sr-only" for="ce-${c.id}">コメントを編集</label>
-        <textarea class="field" id="ce-${c.id}"></textarea>
+        <label class="sr-only" for="ce-${escHtml(c.id)}">コメントを編集</label>
+        <textarea class="field" id="ce-${escHtml(c.id)}"></textarea>
         <div class="row"><button class="btn outline sm" onclick="cancelEdit(this)">キャンセル</button><button class="btn sm" onclick="saveEdit(this)">保存</button></div>
       </div>
     </div>`;
@@ -907,7 +908,7 @@ function formatTime(iso) {
   return `${fmtDate(iso)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 function escHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 (() => {

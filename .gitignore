@@ -5,3 +5,9 @@ Thumbs.db
 # Editor
 .vscode/
 *.swp
+
+# ローカル設定・秘密情報（誤コミット防止）
+.claude/
+.env*
+*.pem
+*.key
