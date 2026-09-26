@@ -10,6 +10,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/dist/umd/supabase.js" integrity="sha384-K1nraABOP/zFehpLIUksXebbs7jMpB8gYMlb+uhVKZcWT/9Vkq1+qhv6ndC+1Yuz" crossorigin="anonymous"></script>
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GP99F78Y1Y"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-GP99F78Y1Y', { send_page_view: false });
+</script>
 <style>
   /* サイト制作ルールブック準拠。配色は DADS キーカラー（Blue）とセマンティックカラー（@digital-go-jp/design-tokens 2.0.1） */
   :root {
@@ -346,7 +354,7 @@ async function handleLogin(e) {
 async function handleLogout() { adminShown = false; await db.auth.signOut(); }
 
 // ─── データ ───
-const state = { items: [], sel: null, loaded: false };
+const state = { items: [], sel: undefined, loaded: false };
 const wide = matchMedia('(min-width: 840px)');
 
 async function fetchProposals() {
@@ -378,6 +386,19 @@ function route() {
   renderList();
   if (changed || !document.querySelector('.editor')) renderDetail();
   document.getElementById('layout').dataset.mode = sel ? 'detail' : 'list';
+  if (changed) trackPageView();
+}
+
+// ─── アクセス解析（GA4） ───
+function trackPageView() {
+  if (typeof gtag !== 'function') return;
+  const mode = state.sel ? (state.sel === 'new' ? 'new' : 'detail') : 'list';
+  const path = `/admin${mode === 'list' ? '' : `/${mode}`}`;
+  gtag('event', 'page_view', {
+    page_title: `管理${mode === 'list' ? '' : mode === 'new' ? '(新規)' : '(編集)'} | みんカレポータル`,
+    page_location: location.href,
+    page_path: path,
+  });
 }
 window.addEventListener('hashchange', () => { route(); if (!wide.matches && state.sel) { document.getElementById('detail').focus({ preventScroll: true }); scrollTo(0, 0); } });
 wide.addEventListener('change', route);

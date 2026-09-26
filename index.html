@@ -10,6 +10,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/dist/umd/supabase.js" integrity="sha384-K1nraABOP/zFehpLIUksXebbs7jMpB8gYMlb+uhVKZcWT/9Vkq1+qhv6ndC+1Yuz" crossorigin="anonymous"></script>
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GP99F78Y1Y"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  // ハッシュ遷移するSPAのためページビューは route() 内で手動送信する
+  gtag('config', 'G-GP99F78Y1Y', { send_page_view: false });
+</script>
 <style>
   /*
    * サイト制作ルールブック準拠。配色は白地＋淡い面（MD3の塗りカード風）。キーカラーは DADS Blue 700、
@@ -322,7 +331,7 @@
       </svg>
       <span class="brand-name">みんカレポータル<span class="brand-sub">Shimokita College 全体会議</span></span>
     </a>
-    <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc5zKz8f8dSpdgNjBu8mpM68dgtRaJJqu1zXNxlT0s2pxqBFA/viewform?usp=dialog" target="_blank" rel="noopener"><span data-icon="plus"></span><span>提案<span class="long">する</span></span><span class="sr-only">（新しいタブで開きます）</span></a>
+    <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc5zKz8f8dSpdgNjBu8mpM68dgtRaJJqu1zXNxlT0s2pxqBFA/viewform?usp=dialog" target="_blank" rel="noopener" onclick="gtag('event','open_proposal_form',{location:'header'})"><span data-icon="plus"></span><span>提案<span class="long">する</span></span><span class="sr-only">（新しいタブで開きます）</span></a>
   </div>
 </header>
 
@@ -355,7 +364,7 @@
       <div class="propose-card" id="propose-card" hidden>
         <h2>新しい議案を提案する</h2>
         <p>居住者であれば誰でも提案できます。支持が集まった提案は全体会議の議題になります。</p>
-        <a class="btn outline" href="https://docs.google.com/forms/d/e/1FAIpQLSc5zKz8f8dSpdgNjBu8mpM68dgtRaJJqu1zXNxlT0s2pxqBFA/viewform?usp=dialog" target="_blank" rel="noopener">提案フォームを開く<span data-icon="external-link"></span><span class="sr-only">（新しいタブで開きます）</span></a>
+        <a class="btn outline" href="https://docs.google.com/forms/d/e/1FAIpQLSc5zKz8f8dSpdgNjBu8mpM68dgtRaJJqu1zXNxlT0s2pxqBFA/viewform?usp=dialog" target="_blank" rel="noopener" onclick="gtag('event','open_proposal_form',{location:'propose_card'})">提案フォームを開く<span data-icon="external-link"></span><span class="sr-only">（新しいタブで開きます）</span></a>
       </div>
     </section>
 
@@ -453,7 +462,7 @@ const getSavedName = () => localStorage.getItem('sc_username') || '';
 const saveName = n => { if (n) localStorage.setItem('sc_username', n); };
 
 // ─── 状態 ───
-const state = { items: {}, reactN: {}, commentN: {}, view: 'active', sel: null, q: '', loaded: false };
+const state = { items: {}, reactN: {}, commentN: {}, view: null, sel: null, q: '', loaded: false };
 const wide = matchMedia('(min-width: 840px)');
 
 function itemsOf(view) {
@@ -484,6 +493,27 @@ function route() {
   renderNav(); renderList();
   if (selChanged || !document.querySelector('.detail')) renderDetail();
   document.getElementById('layout').dataset.mode = sel ? 'detail' : 'list';
+  if (changedView || selChanged) trackPageView();
+}
+
+// ─── アクセス解析（GA4） ───
+// SPAなのでURLは変わらずハッシュだけが変わる。区間（審議中/提案/過去）＋一覧or詳細を
+// 仮想ページとして手動送信し、GA4の「エンゲージメント > ページと画面」の離脱率で
+// 「どの部分で離脱が多いか」が見えるようにする。
+function trackPageView() {
+  if (typeof gtag !== 'function') return;
+  const mode = state.sel ? 'detail' : 'list';
+  const path = `/${state.view}${mode === 'detail' ? '/detail' : ''}`;
+  const v = VIEWS[state.view];
+  gtag('event', 'page_view', {
+    page_title: `${v.title}${mode === 'detail' ? '(詳細)' : ''} | みんカレポータル`,
+    page_location: location.href,
+    page_path: path,
+  });
+  if (mode === 'detail') {
+    const p = state.items[state.sel];
+    if (p) gtag('event', 'select_content', { content_type: 'proposal', item_id: state.sel, item_title: p.title, section: state.view });
+  }
 }
 window.addEventListener('hashchange', () => {
   route();
@@ -829,6 +859,7 @@ function openMinutes(btn) {
   const p = state.items[state.sel];
   if (!p) return;
   minutesOpener = btn;
+  gtag('event', 'open_minutes', { item_id: p.item_id, item_title: p.title });
   document.getElementById('mm-title').textContent = p.title;
   fillProse(document.getElementById('mm-minutes'), p.minutes, '議事録はまだ入力されていません。');
   fillProse(document.getElementById('mm-summary'), p.summary, '要約はまだ入力されていません。');
