@@ -318,10 +318,14 @@ const chipOf = p => { const s = stOf(p); return `<span class="chip ${s.chip}">${
 
 // ─── 認証 ───
 async function init() {
+  // ポータル側（index.html）が同じブラウザで匿名ログイン(signInAnonymously)している場合、
+  // localStorageのセッションを同一オリジンで共有するためここにも見えてしまう。
+  // 匿名セッションはログインとみなさない（is_anonymousで判定）。
   const { data: { session } } = await db.auth.getSession();
-  if (session) showAdmin(session.user);
+  if (session && !session.user.is_anonymous) showAdmin(session.user);
+  else showLogin();
   db.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) showAdmin(session.user);
+    if (event === 'SIGNED_IN' && session && !session.user.is_anonymous) showAdmin(session.user);
     if (event === 'SIGNED_OUT') showLogin();
   });
 }

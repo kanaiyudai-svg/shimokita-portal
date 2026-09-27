@@ -448,15 +448,20 @@ const VIEWS = {
 const cfgOf  = p => STATUS_CFG[p.status] || STATUS_CFG['提案中'];
 const chipOf = p => { const c = cfgOf(p); return `<span class="chip ${c.chip}">${ic(c.icon)}${c.label}</span>`; };
 
-// ─── 利用者の識別（端末ごと） ───
-function getSessionId() {
-  let id = localStorage.getItem('sc_session_id');
-  if (!id) {
-    id = typeof crypto.randomUUID === 'function' ? crypto.randomUUID()
-      : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
-    localStorage.setItem('sc_session_id', id);
+// ─── 利用者の識別（匿名ログイン。自分の行かどうかは常にサーバー側のauth.uid()で判定する） ───
+let myUid = null;
+let authReady = null;
+function ensureAuth() {
+  if (!authReady) {
+    authReady = (async () => {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) return session.user.id;
+      const { data, error } = await db.auth.signInAnonymously();
+      if (error) { console.error(error); return null; }
+      return data.session?.user.id ?? null;
+    })();
   }
-  return id;
+  return authReady;
 }
 const getSavedName = () => localStorage.getItem('sc_username') || '';
 const saveName = n => { if (n) localStorage.setItem('sc_username', n); };
@@ -647,7 +652,7 @@ async function fetchAll() {
 }
 
 async function loadStamps(itemId) {
-  const { data, error } = await db.from('reactions').select('emoji,session_id').eq('item_id', itemId);
+  const { data, error } = await db.from('reactions').select('emoji,is_mine').eq('item_id', itemId);
   if (state.sel !== itemId) return;
   const box = document.getElementById('stamps');
   if (error) {
@@ -655,8 +660,8 @@ async function loadStamps(itemId) {
     box.querySelectorAll('.stamp-count').forEach(c => c.textContent = '-');
     return;
   }
-  const counts = {}, mine = new Set(), sid = getSessionId();
-  (data || []).forEach(r => { counts[r.emoji] = (counts[r.emoji] || 0) + 1; if (r.session_id === sid) mine.add(r.emoji); });
+  const counts = {}, mine = new Set();
+  (data || []).forEach(r => { counts[r.emoji] = (counts[r.emoji] || 0) + 1; if (r.is_mine) mine.add(r.emoji); });
   box.querySelectorAll('.stamp').forEach(b => {
     b.querySelector('.stamp-count').textContent = counts[b.dataset.key] || 0;
     b.setAttribute('aria-pressed', mine.has(b.dataset.key));
@@ -666,13 +671,13 @@ async function loadStamps(itemId) {
 }
 
 async function loadComments(itemId) {
-  const { data, error } = await db.from('comments').select('*').eq('item_id', itemId).order('created_at', { ascending: true });
+  const { data, error } = await db.from('comments').select('id,item_id,author,content,created_at,is_mine').eq('item_id', itemId).order('created_at', { ascending: true });
   if (state.sel !== itemId) return;
   const list = document.getElementById('comments');
   list.innerHTML = '';
   if (error) { showErr('comments', 'コメントを読み込めませんでした。時間をおいて開き直してください。'); return; }
   if (!data?.length) list.innerHTML = '<p class="state">まだコメントはありません。最初の意見を書いてみてください。</p>';
-  else data.forEach(c => appendComment(c));
+  else data.forEach(c => appendComment(c, c.is_mine));
   state.commentN[itemId] = (data || []).length;
   updateTotals();
 }
@@ -704,9 +709,9 @@ function subscribeAll() {
   db.channel('comments-watch')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, e => {
       const c = e.new;
-      if (c.session_id === getSessionId()) return;  // 自分の投稿は送信時に反映済み
+      if (c.user_id === myUid) return;  // 自分の投稿は送信時に反映済み
       state.commentN[c.item_id] = (state.commentN[c.item_id] || 0) + 1;
-      if (state.sel === c.item_id) { document.querySelector('#comments > .state')?.remove(); appendComment(c); }
+      if (state.sel === c.item_id) { document.querySelector('#comments > .state')?.remove(); appendComment(c, false); }
       updateTotals();
     })
     .subscribe();
@@ -722,7 +727,8 @@ function afterChange(itemId) {
 // ─── 反応 ───
 async function react(btn) {
   if (btn.getAttribute('aria-busy') === 'true') return;
-  const itemId = state.sel, key = btn.dataset.key, sid = getSessionId();
+  await ensureAuth();
+  const itemId = state.sel, key = btn.dataset.key;
   const on = btn.getAttribute('aria-pressed') === 'true';
   const countEl = btn.querySelector('.stamp-count');
   const prev = parseInt(countEl.textContent) || 0;
@@ -731,11 +737,12 @@ async function react(btn) {
   const set = (pressed, n, delta) => { btn.setAttribute('aria-pressed', pressed); countEl.textContent = n; state.reactN[itemId] = (state.reactN[itemId] || 0) + delta; updateTotals(); };
   if (on) {
     set(false, Math.max(0, prev - 1), -1);
-    const { error } = await db.from('reactions').delete().eq('item_id', itemId).eq('emoji', key).eq('session_id', sid);
+    // 自分の行だけが対象になるのはRLS（user_id = auth.uid()）で保証されている
+    const { error } = await db.from('reactions').delete().eq('item_id', itemId).eq('emoji', key);
     if (error) { set(true, prev, 1); showErr('stamps', `「${key}」を取り消せませんでした。もう一度押してください。`); }
   } else {
     set(true, prev + 1, 1);
-    const { error } = await db.from('reactions').insert({ item_id: itemId, emoji: key, session_id: sid });
+    const { error } = await db.from('reactions').insert({ item_id: itemId, emoji: key });
     if (error) { set(false, prev, -1); showErr('stamps', `「${key}」を記録できませんでした。もう一度押してください。`); }
   }
   btn.removeAttribute('aria-busy');
@@ -750,6 +757,7 @@ function clearErr() {
   document.getElementById('ctext-err').hidden = true;
 }
 async function submitComment() {
+  await ensureAuth();
   const itemId = state.sel;
   const input = document.getElementById('ctext'), nameEl = document.getElementById('cname'), btn = document.getElementById('csend');
   if (btn.getAttribute('aria-disabled') === 'true') return;
@@ -760,12 +768,13 @@ async function submitComment() {
   btn.setAttribute('aria-disabled', 'true'); btn.querySelector('span').textContent = '送信中';
   hideErr('comments');
   const { data, error } = await db.from('comments')
-    .insert({ item_id: itemId, author: name, content: text, session_id: getSessionId() }).select().single();
+    .insert({ item_id: itemId, author: name, content: text })
+    .select('id,item_id,author,content,created_at,is_mine').single();
   btn.removeAttribute('aria-disabled'); btn.querySelector('span').textContent = '送信';
   if (error) { showErr('comments', 'コメントを送信できませんでした。入力内容は残っています。もう一度送信してください。'); return; }
   if (state.sel !== itemId) return;
   document.querySelector('#comments > .state')?.remove();
-  appendComment(data, true);
+  appendComment(data, true, true);
   state.commentN[itemId] = (state.commentN[itemId] || 0) + 1;
   updateTotals();
   input.value = '';
@@ -773,8 +782,7 @@ async function submitComment() {
   showToast('コメントを送信しました');
 }
 
-function appendComment(c, scroll = false) {
-  const mine = c.session_id === getSessionId();
+function appendComment(c, mine, scroll = false) {
   const author = c.author || '匿名';
   const el = document.createElement('div');
   el.className = 'comment' + (mine ? ' mine' : '');
@@ -824,7 +832,8 @@ async function saveEdit(btn) {
   if (!text) { ta.focus(); return; }
   if (btn.getAttribute('aria-disabled') === 'true') return;
   btn.setAttribute('aria-disabled', 'true'); btn.textContent = '保存中';
-  const { error } = await db.from('comments').update({ content: text }).eq('id', c.dataset.commentId).eq('session_id', getSessionId());
+  // 自分の行だけが対象になるのはRLS（user_id = auth.uid()）で保証されている
+  const { error } = await db.from('comments').update({ content: text }).eq('id', c.dataset.commentId);
   btn.removeAttribute('aria-disabled'); btn.textContent = '保存';
   if (error) { showToast('編集を保存できませんでした。もう一度保存してください。'); return; }
   c.querySelector('.c-text').textContent = text;
@@ -835,7 +844,7 @@ async function saveEdit(btn) {
 async function deleteComment(btn) {
   if (!confirm('このコメントを削除しますか。')) return;
   const c = btn.closest('.comment'), itemId = state.sel;
-  const { error } = await db.from('comments').delete().eq('id', c.dataset.commentId).eq('session_id', getSessionId());
+  const { error } = await db.from('comments').delete().eq('id', c.dataset.commentId);
   if (error) { showToast('コメントを削除できませんでした。もう一度お試しください。'); return; }
   c.remove();
   state.commentN[itemId] = Math.max(0, (state.commentN[itemId] || 1) - 1);
@@ -947,6 +956,7 @@ function escHtml(s) {
   document.getElementById('today').textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`;
   document.querySelectorAll('[data-icon]').forEach(s => { s.outerHTML = ic(s.dataset.icon); });
 })();
+ensureAuth().then(uid => { myUid = uid; });
 route();
 fetchAll();
 subscribeAll();
