@@ -190,6 +190,11 @@
   .vote-row { padding: 12px var(--sp-3); border-radius: var(--r-m); background: #ffffff; }
   .vote-row .who { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); font-weight: 700; }
   .vote-row .reason { margin-top: var(--sp-1); font-size: var(--fs-s); color: var(--text-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .sub-dl { display: grid; gap: var(--sp-2); }
+  .sub-dl div { display: grid; grid-template-columns: 9em 1fr; gap: var(--sp-2); }
+  .sub-dl dt { font-size: var(--fs-s); font-weight: 700; color: var(--text-2); }
+  .sub-dl dd { overflow-wrap: anywhere; white-space: pre-wrap; }
+  @media (max-width: 839px) { .sub-dl div { grid-template-columns: 1fr; gap: 0; } }
   .chip.c-yes { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
   .chip.c-no { background: #ffffff; border: 2px solid var(--primary); color: var(--primary); }
   .chip.c-wait { border-style: dashed; background: #ffffff; color: var(--text-2); }
@@ -324,6 +329,7 @@ const LUCIDE = {
   'trash-2':       '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
   'log-out':       '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
   'chevron-left':  '<path d="m15 18-6-6 6-6"/>',
+  'inbox':         '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
   'x':             '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   'users':         '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   'list':          '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
@@ -395,7 +401,7 @@ async function handleLogin(e) {
 async function handleLogout() { adminShown = false; await db.auth.signOut(); }
 
 // ─── データ ───
-const state = { items: [], sel: undefined, loaded: false, me: null, staff: [], reviews: [] };
+const state = { items: [], sel: undefined, loaded: false, me: null, staff: [], reviews: [], submissions: [] };
 const wide = matchMedia('(min-width: 840px)');
 
 async function fetchProposals() {
@@ -408,9 +414,16 @@ async function fetchProposals() {
   }
   state.items = data || [];
   await fetchReviews();
+  await fetchSubmissions();
   state.loaded = true;
   route();
 }
+// Googleフォームからの提出者情報（氏名・メール・伝言）。事務局だけが読める。表が未作成でも管理画面は動かす
+async function fetchSubmissions() {
+  const { data, error } = await db.from('proposal_submissions').select('item_id,submitter_name,submitter_email,extra_note,created_at');
+  state.submissions = error ? [] : (data || []);
+}
+const submissionOf = p => state.submissions.find(s => s.item_id === p.item_id);
 async function fetchReviews() {
   const { data, error } = await db.from('proposal_reviews').select('id,item_id,reviewer_id,vote,reason,updated_at');
   if (error) { showBanner(document.getElementById('admin-error'), '評価を取得できませんでした：' + error.message); return; }
@@ -461,7 +474,7 @@ function renderList() {
   if (!state.items.length) st.innerHTML = `${ic('list')}<span>議案はまだ登録されていません。「新しい議案」から追加できます。</span>`;
   document.getElementById('items').innerHTML = state.items.map(p => `
     <li><a class="item" href="#${escHtml(p.id)}" ${String(p.id) === state.sel ? 'aria-current="true"' : ''}>
-      <span class="item-top">${chipOf(p)}${p.is_published === false ? `<span class="chip c-hidden">${ic('eye-off')}非公開</span>` : ''}
+      <span class="item-top">${chipOf(p)}${p.is_published === false ? `<span class="chip c-hidden">${ic('eye-off')}非公開</span>` : ''}${submissionOf(p) ? `<span class="chip">${ic('inbox')}フォーム提出</span>` : ''}
         ${p.created_at ? `<time class="item-date" datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time>` : ''}</span>
       <span class="item-title">${escHtml(p.title)}</span>
       <span class="review-count">${ic('users')}評価 ${reviewsOf(p).length}/${state.staff.length}${myReview(p) ? '' : '　あなたは未回答'}</span>
@@ -479,6 +492,8 @@ function renderDetail() {
       <a class="btn-text back" href="#">${ic('chevron-left')}一覧に戻る</a>
       <div class="ed-top"><span id="ed-chip">${chipOf(p)}</span>${p.created_at ? `<span>提案日 <time datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time></span>` : ''}</div>
       <h2 class="ed-title" id="ed-title">${escHtml(p.title)}</h2>
+
+      ${submissionHtml(p)}
 
       <section class="sec" aria-labelledby="h-review" id="review-sec">${reviewHtml(p)}</section>
 
@@ -542,6 +557,23 @@ function renderDetail() {
         <button class="btn danger" onclick="deleteProposal()">${ic('trash-2')}この議案を削除</button>
       </section>
     </article>`;
+}
+
+// ─── 提出者情報（フォーム経由の議案のみ。事務局にだけ表示） ───
+function submissionHtml(p) {
+  const s = submissionOf(p);
+  if (!s) return '';
+  return `
+      <section class="sec" aria-labelledby="h-sub">
+        <h3 id="h-sub">フォームの提出者</h3>
+        <p class="support" style="margin:-8px 0 12px">この情報は事務局だけに表示され、ポータルには出ません。</p>
+        <dl class="sub-dl">
+          <div><dt>氏名</dt><dd>${escHtml(s.submitter_name)}</dd></div>
+          <div><dt>メールアドレス</dt><dd><a href="mailto:${escHtml(s.submitter_email)}">${escHtml(s.submitter_email)}</a></dd></div>
+          <div><dt>提出日時</dt><dd><time datetime="${escHtml(s.created_at)}">${fmtDate(s.created_at)}</time></dd></div>
+          <div><dt>事務局への伝言</dt><dd>${s.extra_note ? escHtml(s.extra_note) : 'なし'}</dd></div>
+        </dl>
+      </section>`;
 }
 
 // ─── 事務局の評価（はい／いいえ＋理由） ───
