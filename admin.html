@@ -171,6 +171,29 @@
   .pub-label { font-weight: 700; }
   .pub-desc { font-size: var(--fs-s); color: var(--text-2); margin-top: var(--sp-1); }
 
+  /* 事務局の評価（色でなく、アイコン＋文言＋塗り/枠の差で「はい／いいえ」を示す） */
+  .review-count { display: inline-flex; align-items: center; gap: var(--sp-1); margin-top: var(--sp-1); font-size: var(--fs-s); color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .review-count .ic { width: 1em; height: 1em; }
+  .vote-opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); border: none; }
+  .vote-opts legend { font-size: var(--fs-s); font-weight: 700; margin-bottom: var(--sp-1); }
+  .vote-opt { position: relative; }
+  .vote-opt input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; }
+  .vote-opt span { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); min-height: 48px; border: 1px solid var(--primary); border-radius: var(--r-full); color: var(--primary); background: #ffffff; font-weight: 700; transition: background-color 150ms var(--ease), color 150ms var(--ease); }
+  .vote-opt span .ic { display: none; width: 1em; height: 1em; }
+  .vote-opt input:hover + span { background: var(--primary-container); }
+  .vote-opt input:checked + span { background: var(--primary); color: var(--on-primary); }
+  .vote-opt input:checked + span .ic { display: inline; }
+  .vote-opt input:focus-visible + span { outline: 2px solid var(--focus-a); outline-offset: 2px; box-shadow: 0 0 0 4px var(--focus-b); }
+  .tally { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); margin-top: var(--sp-4); font-size: var(--fs-s); color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .tally strong { color: var(--text); font-size: var(--fs-l); }
+  .votes { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); }
+  .vote-row { padding: 12px var(--sp-3); border-radius: var(--r-m); background: #ffffff; }
+  .vote-row .who { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); font-weight: 700; }
+  .vote-row .reason { margin-top: var(--sp-1); font-size: var(--fs-s); color: var(--text-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .chip.c-yes { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+  .chip.c-no { background: #ffffff; border: 2px solid var(--primary); color: var(--primary); }
+  .chip.c-wait { border-style: dashed; background: #ffffff; color: var(--text-2); }
+
   .detail-empty { display: grid; place-items: center; text-align: center; min-height: 40vh; color: var(--text-2); }
   .detail-empty .ic { width: 48px; height: 48px; color: var(--text-3); margin: 0 auto var(--sp-3); }
   .state { display: flex; align-items: flex-start; gap: var(--sp-2); padding: var(--sp-4) 0; color: var(--text-2); }
@@ -301,6 +324,8 @@ const LUCIDE = {
   'trash-2':       '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
   'log-out':       '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
   'chevron-left':  '<path d="m15 18-6-6 6-6"/>',
+  'x':             '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  'users':         '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   'list':          '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
   'external-link': '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
 };
@@ -334,11 +359,23 @@ function showLogin() {
   document.getElementById('admin-section').style.display = 'none';
 }
 let adminShown = false;
-function showAdmin(user) {
+async function showAdmin(user) {
+  if (adminShown) return;
+  adminShown = true;
+  // 事務局として登録されている人だけが入れる（staff表はRLSで事務局にしか見えない）
+  const { data, error } = await db.from('staff').select('user_id,name');
+  if (error || !(data || []).some(s => s.user_id === user.id)) {
+    adminShown = false;
+    showLogin();
+    showBanner(document.getElementById('login-error'), 'このアカウントは事務局として登録されていません。管理者に登録を依頼してください。');
+    await db.auth.signOut();
+    return;
+  }
+  state.me = user.id; state.staff = data;
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('admin-section').style.display = 'block';
   document.getElementById('user-email').textContent = user?.email || '';
-  if (!adminShown) { adminShown = true; fetchProposals(); }
+  fetchProposals();
 }
 function showBanner(el, msg) { el.innerHTML = `${ic('circle-alert')}<span>${escHtml(msg)}</span>`; el.hidden = false; }
 async function handleLogin(e) {
@@ -358,7 +395,7 @@ async function handleLogin(e) {
 async function handleLogout() { adminShown = false; await db.auth.signOut(); }
 
 // ─── データ ───
-const state = { items: [], sel: undefined, loaded: false };
+const state = { items: [], sel: undefined, loaded: false, me: null, staff: [], reviews: [] };
 const wide = matchMedia('(min-width: 840px)');
 
 async function fetchProposals() {
@@ -370,9 +407,18 @@ async function fetchProposals() {
     return;
   }
   state.items = data || [];
+  await fetchReviews();
   state.loaded = true;
   route();
 }
+async function fetchReviews() {
+  const { data, error } = await db.from('proposal_reviews').select('id,item_id,reviewer_id,vote,reason,updated_at');
+  if (error) { showBanner(document.getElementById('admin-error'), '評価を取得できませんでした：' + error.message); return; }
+  state.reviews = data || [];
+}
+const reviewsOf = p => state.reviews.filter(r => r.item_id === p.item_id);
+const myReview = p => reviewsOf(p).find(r => r.reviewer_id === state.me);
+const staffName = uid => (state.staff.find(s => s.user_id === uid) || {}).name || '不明なメンバー';
 const byId = id => state.items.find(p => String(p.id) === String(id));
 
 function updateStats() {
@@ -418,6 +464,7 @@ function renderList() {
       <span class="item-top">${chipOf(p)}${p.is_published === false ? `<span class="chip c-hidden">${ic('eye-off')}非公開</span>` : ''}
         ${p.created_at ? `<time class="item-date" datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time>` : ''}</span>
       <span class="item-title">${escHtml(p.title)}</span>
+      <span class="review-count">${ic('users')}評価 ${reviewsOf(p).length}/${state.staff.length}${myReview(p) ? '' : '　あなたは未回答'}</span>
     </a></li>`).join('');
 }
 
@@ -432,6 +479,8 @@ function renderDetail() {
       <a class="btn-text back" href="#">${ic('chevron-left')}一覧に戻る</a>
       <div class="ed-top"><span id="ed-chip">${chipOf(p)}</span>${p.created_at ? `<span>提案日 <time datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time></span>` : ''}</div>
       <h2 class="ed-title" id="ed-title">${escHtml(p.title)}</h2>
+
+      <section class="sec" aria-labelledby="h-review" id="review-sec">${reviewHtml(p)}</section>
 
       <section class="sec" aria-labelledby="h-status">
         <h3 id="h-status">状態</h3>
@@ -495,6 +544,60 @@ function renderDetail() {
     </article>`;
 }
 
+// ─── 事務局の評価（はい／いいえ＋理由） ───
+function reviewHtml(p) {
+  const mine = myReview(p), rs = reviewsOf(p);
+  const yes = rs.filter(r => r.vote === 'yes').length, no = rs.filter(r => r.vote === 'no').length;
+  const waiting = state.staff.filter(s => !rs.some(r => r.reviewer_id === s.user_id));
+  const chip = v => v === 'yes' ? `<span class="chip c-yes">${ic('check')}はい</span>` : `<span class="chip c-no">${ic('x')}いいえ</span>`;
+  return `
+    <h3 id="h-review">事務局の評価</h3>
+    <p class="support" style="margin:-8px 0 16px">この議案をポータルに載せてよいか、「はい」か「いいえ」で答えてください。公開するかどうかは、結果を見て人が決めます。</p>
+    <fieldset class="vote-opts">
+      <legend>あなたの評価</legend>
+      <label class="vote-opt"><input type="radio" name="vote" value="yes" ${mine?.vote === 'yes' ? 'checked' : ''} onchange="voteChanged()"><span>${ic('check')}はい</span></label>
+      <label class="vote-opt"><input type="radio" name="vote" value="no" ${mine?.vote === 'no' ? 'checked' : ''} onchange="voteChanged()"><span>${ic('check')}いいえ</span></label>
+    </fieldset>
+    <div class="f" style="margin-top:16px">
+      <label for="rreason">理由<span class="req" id="rreq">${mine?.vote === 'no' ? '※必須' : '※任意'}</span></label>
+      <textarea class="field" id="rreason" rows="3" aria-describedby="rreason-h rreason-err" oninput="clearFieldError(this)">${escHtml(mine?.reason || '')}</textarea>
+      <p class="support" id="rreason-h">「いいえ」の場合は理由が必要です。1000字までです。</p>
+      <p class="err-text" id="rreason-err" hidden>＊「いいえ」の場合は理由を入力してください。</p>
+    </div>
+    <div class="foot"><button class="btn" id="rsave" onclick="saveReview()">${mine ? '評価を更新' : '評価を送信'}</button><span class="fb" id="rfb" role="status"></span></div>
+    <div class="tally" aria-label="集計">
+      <span>はい <strong>${yes}</strong></span><span>いいえ <strong>${no}</strong></span><span>未回答 <strong>${waiting.length}</strong></span>
+    </div>
+    <ul class="votes">
+      ${rs.map(r => `<li class="vote-row"><div class="who">${escHtml(staffName(r.reviewer_id))}${chip(r.vote)}</div>${r.reason ? `<p class="reason">${escHtml(r.reason)}</p>` : ''}</li>`).join('')}
+      ${waiting.map(s => `<li class="vote-row"><div class="who">${escHtml(s.name)}<span class="chip c-wait">${ic('hourglass')}未回答</span></div></li>`).join('')}
+    </ul>`;
+}
+function voteChanged() {
+  const v = document.querySelector('input[name="vote"]:checked')?.value;
+  document.getElementById('rreq').textContent = v === 'no' ? '※必須' : '※任意';
+}
+async function saveReview() {
+  const btn = document.getElementById('rsave'), fb = document.getElementById('rfb'), reasonEl = document.getElementById('rreason');
+  if (btn.getAttribute('aria-disabled') === 'true') return;
+  const vote = document.querySelector('input[name="vote"]:checked')?.value;
+  if (!vote) { setFb(fb, `${ic('circle-alert')}「はい」か「いいえ」を選んでください`, 'err'); return; }
+  const reason = reasonEl.value.trim();
+  if (vote === 'no' && !reason) { showFieldError(reasonEl); return; }
+  if (reason.length > 1000) { setFb(fb, `${ic('circle-alert')}理由は1000字以内にしてください`, 'err'); return; }
+  const p = byId(state.sel);
+  btn.setAttribute('aria-disabled', 'true'); setFb(fb, SAVING());
+  const { error } = await db.from('proposal_reviews')
+    .upsert({ item_id: p.item_id, reviewer_id: state.me, vote, reason, updated_at: new Date().toISOString() }, { onConflict: 'item_id,reviewer_id' });
+  btn.removeAttribute('aria-disabled');
+  if (error) { setFb(fb, `${ic('circle-alert')}保存できませんでした。もう一度お試しください`, 'err'); return; }
+  await fetchReviews();
+  document.getElementById('review-sec').innerHTML = reviewHtml(p);
+  renderList();
+  flashDone(document.getElementById('rfb'), '保存しました');
+  showToast('評価を保存しました');
+}
+
 function renderCreate(el) {
   el.innerHTML = `
     <article class="editor" aria-labelledby="ed-title">
@@ -523,8 +626,10 @@ function renderCreate(el) {
 function setFb(el, html, cls = '') { el.innerHTML = html; el.className = 'fb' + (cls ? ' ' + cls : ''); }
 function flashDone(el, msg) { setFb(el, `${ic('circle-check')}${escHtml(msg)}`, 'ok'); clearTimeout(el._t); el._t = setTimeout(() => setFb(el, ''), 5000); }
 const SAVING = () => `${ic('hourglass')}保存中`;
-function showFieldError(input) { input.setAttribute('aria-invalid', 'true'); document.getElementById(input.getAttribute('aria-describedby')).hidden = false; input.focus(); }
-function clearFieldError(input) { input.removeAttribute('aria-invalid'); document.getElementById(input.getAttribute('aria-describedby')).hidden = true; }
+// aria-describedby は複数指定可。エラー文は最後のIDとして並べる
+const errElOf = input => document.getElementById(input.getAttribute('aria-describedby').split(' ').pop());
+function showFieldError(input) { input.setAttribute('aria-invalid', 'true'); errElOf(input).hidden = false; input.focus(); }
+function clearFieldError(input) { input.removeAttribute('aria-invalid'); errElOf(input).hidden = true; }
 function patch(id, fields) { Object.assign(byId(id), fields); renderList(); }
 
 // ─── 状態変更 ───
