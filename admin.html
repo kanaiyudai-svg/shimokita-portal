@@ -275,6 +275,26 @@
   </main>
 </div>
 
+<div id="setup-section" style="display:none">
+  <main class="login">
+    <div class="login-brand"><svg class="brand-mark" aria-hidden="true"><use href="#mark"/></svg>みんカレポータル</div>
+    <h1>パスワードの設定</h1>
+    <p>ログインに使うパスワードを決めてください。8文字以上で、他のサービスと同じものは避けてください。</p>
+    <form onsubmit="handleSetPassword(event)" novalidate>
+      <div class="f">
+        <label for="new-password">新しいパスワード<span class="req">※必須</span></label>
+        <input class="field" type="password" id="new-password" autocomplete="new-password">
+      </div>
+      <div class="f">
+        <label for="new-password2">もう一度入力<span class="req">※必須</span></label>
+        <input class="field" type="password" id="new-password2" autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn block" id="setup-btn">パスワードを設定する</button>
+    </form>
+    <div class="banner error" id="setup-error" hidden></div>
+  </main>
+</div>
+
 <div id="admin-section">
   <header class="appbar">
     <div class="appbar-in">
@@ -313,6 +333,9 @@
 <script>
 const SUPABASE_URL  = 'https://ggdjoxnjwqthhkwpcvqq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZGpveG5qd3F0aGhrd3BjdnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTYyNjIsImV4cCI6MjA5MzczMjI2Mn0.X1AvGI5I8I94siB6MS1B_ou9TlA5864wUNsuy6SK4bc';
+// 招待・パスワード再設定メールのリンクから開かれたときは、管理画面ではなくパスワード設定画面を出す。
+// supabase-js がURLのハッシュを消す前に判定しておく。
+let setupMode = /[#&]type=(invite|recovery)\b/.test(location.hash);
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // Lucide アイコン（lucide.dev の SVG パス）
@@ -353,12 +376,40 @@ async function init() {
   // localStorageのセッションを同一オリジンで共有するためここにも見えてしまう。
   // 匿名セッションはログインとみなさない（is_anonymousで判定）。
   const { data: { session } } = await db.auth.getSession();
-  if (session && !session.user.is_anonymous) showAdmin(session.user);
+  if (setupMode && session && !session.user.is_anonymous) showSetup();
+  else if (session && !session.user.is_anonymous) showAdmin(session.user);
   else showLogin();
   db.auth.onAuthStateChange((event, session) => {
+    if (setupMode) {
+      if (session && !session.user.is_anonymous && (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY' || event === 'INITIAL_SESSION')) showSetup();
+      return;
+    }
     if (event === 'SIGNED_IN' && session && !session.user.is_anonymous) showAdmin(session.user);
     if (event === 'SIGNED_OUT') showLogin();
   });
+}
+function showSetup() {
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('admin-section').style.display = 'none';
+  document.getElementById('setup-section').style.display = 'block';
+  document.getElementById('new-password').focus();
+}
+async function handleSetPassword(e) {
+  e.preventDefault();
+  const btn = document.getElementById('setup-btn'), err = document.getElementById('setup-error');
+  if (btn.getAttribute('aria-disabled') === 'true') return;
+  const p1 = document.getElementById('new-password').value, p2 = document.getElementById('new-password2').value;
+  err.hidden = true;
+  if (p1.length < 8) { showBanner(err, 'パスワードは8文字以上にしてください。'); return; }
+  if (p1 !== p2) { showBanner(err, '2つのパスワードが一致しません。'); return; }
+  btn.setAttribute('aria-disabled', 'true'); btn.textContent = '設定中';
+  const { data, error } = await db.auth.updateUser({ password: p1 });
+  btn.removeAttribute('aria-disabled'); btn.textContent = 'パスワードを設定する';
+  if (error) { showBanner(err, 'パスワードを設定できませんでした。リンクの有効期限が切れている場合は、管理者に再送を依頼してください。'); return; }
+  setupMode = false;
+  history.replaceState(null, '', location.pathname);
+  document.getElementById('setup-section').style.display = 'none';
+  showAdmin(data.user);
 }
 function showLogin() {
   document.getElementById('login-section').style.display = 'flex';
