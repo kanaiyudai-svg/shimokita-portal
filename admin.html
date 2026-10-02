@@ -375,8 +375,15 @@ async function init() {
   // ポータル側（index.html）が同じブラウザで匿名ログイン(signInAnonymously)している場合、
   // localStorageのセッションを同一オリジンで共有するためここにも見えてしまう。
   // 匿名セッションはログインとみなさない（is_anonymousで判定）。
+  // 招待・再設定メールのリンクが期限切れ・使用済みだと、URLのハッシュに error_code が付いて戻ってくる
+  const linkError = (location.hash.match(/[#&]error_code=([^&]+)/) || [])[1];
+  if (linkError) history.replaceState(null, '', location.pathname);
   const { data: { session } } = await db.auth.getSession();
-  if (setupMode && session && !session.user.is_anonymous) showSetup();
+  if (linkError) {
+    showLogin();
+    showBanner(document.getElementById('login-error'), 'メールのリンクが使えませんでした。期限が切れているか、すでに使われた可能性があります。管理者に招待の再送を依頼してください。');
+    setupMode = false;
+  } else if (setupMode && session && !session.user.is_anonymous) showSetup();
   else if (session && !session.user.is_anonymous) showAdmin(session.user);
   else showLogin();
   db.auth.onAuthStateChange((event, session) => {
