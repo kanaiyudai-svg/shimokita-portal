@@ -9,6 +9,16 @@
  *
  * 失敗したときは、スクリプトの所有者にメールが届く。回答自体はフォームの「回答」に必ず残る。
  * 引継ぎ: フォームとこのスクリプトは同じアカウントが持つ。管理者を替えるときは両方の所有者を移す。
+ *
+ * 【新しい議案の通知メール】（Supabase の supabase/notify_new_proposal.sql と対）
+ * Supabase のDBが、議案の提出を受けるたびにこのスクリプトのウェブアプリへ合図（空のPOST）を送る。
+ * 合図を受けたら、未送信の通知と宛先（事務局のメール）をSupabaseから受け取り、メールを送る。
+ * 宛先と議案名はSupabase側で決まる。合図には中身が無いので、URLを知られても勝手な文面は送れない。
+ *   設置: 画面右上「デプロイ」>「新しいデプロイ」>種類「ウェブアプリ」>実行ユーザー「自分」>
+ *         アクセスできるユーザー「全員」>デプロイ。権限を許可し、出てくるURL（…/exec）を控える。
+ *         そのURLを Supabase の app_secrets に 'mail_relay_url' として登録する（SQLは notify_new_proposal.sql の6）。
+ *   コードを直したとき: 「デプロイ」>「デプロイを管理」>鉛筆>バージョン「新バージョン」>デプロイ（URLは変わらない）。
+ *   テスト: スクリプトプロパティに NOTIFY_ONLY_TO（自分のメール）を入れると、その1通だけに送る。終わったら必ず消す。
  */
 const FORM_ID = '1U1TOMOjSAiqV-h2QqFDahPH1ToatmOG6kmgojSYIl_8';
 const SUPABASE_URL = 'https://ggdjoxnjwqthhkwpcvqq.supabase.co';
@@ -25,10 +35,19 @@ const FIELD_PREFIX = {
   note:    'その他',
 };
 
-/** 1回だけ実行する。フォーム送信時に onFormSubmit が動くようにする（重複して作らない） */
+const PORTAL_URL = 'https://kanaiyudai-svg.github.io/shimokita-portal/';
+const NOTIFY_SUBJECT = '新たな議題が提出されました';
+
+/**
+ * 1回だけ実行する（直したあとにもう一度実行してよい。重複して作らない）。
+ * フォーム送信時に onFormSubmit が動き、1時間おきに通知の取りこぼしを拾う。
+ */
 function setupTrigger() {
-  ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === 'onFormSubmit') ScriptApp.deleteTrigger(t); });
+  const mine = ['onFormSubmit', 'sendPendingNotifications'];
+  ScriptApp.getProjectTriggers().forEach(t => { if (mine.indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('onFormSubmit').forForm(FormApp.openById(FORM_ID)).onFormSubmit().create();
+  // 合図が届かなかったときの保険。通知待ちが無ければ何も送らない
+  ScriptApp.newTrigger('sendPendingNotifications').timeBased().everyHours(1).create();
 }
 
 function onFormSubmit(e) {
@@ -74,5 +93,87 @@ function notifyOwner_(reason, answers) {
     subject: '【みんカレポータル】議案フォームの自動登録に失敗しました',
     body: reason + '\n\n議案: ' + (answers.title || '(不明)') + '\n提出者: ' + (answers.name || '(不明)') +
           '\n\n回答はフォームの「回答」に残っています。管理画面の「新しい議案」から手で登録してください。',
+  });
+}
+
+/** Supabase のDBからの合図（pg_net）。中身は見ず、通知待ちを取りに行くだけ */
+function doPost() {
+  sendPendingNotifications();
+  return ContentService.createTextOutput('ok');
+}
+
+/** 未送信の「新しい議案」通知を、事務局メンバー全員にメールする。合図と1時間おきの保険から呼ばれる */
+function sendPendingNotifications() {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(60000); // 合図が重なったとき、同じ通知を二重に送らないよう順番に処理する
+  } catch (err) {
+    alertOwner_('通知メールの処理が混み合って進められませんでした。次の1時間おきの確認で再度試します。');
+    return;
+  }
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const secret = props.getProperty('FORM_SECRET');
+    const data = rpc_('fetch_proposal_notifications', { p_secret: secret });
+    if (!data.items.length) return;
+
+    const only = props.getProperty('NOTIFY_ONLY_TO'); // テスト用。入っていればその1通だけに送る
+    const to = only ? [only] : data.recipients;
+    if (!to.length) {
+      alertOwner_('新しい議案の通知を送る宛先がありません（事務局のメールが登録されていません）。\n議案: ' +
+                  data.items.map(i => i.title).join(' / '));
+    }
+
+    const failed = [];
+    data.items.forEach(item => {
+      const body = [
+        'みんカレの議案フォームに、新たな議題が提出されました。',
+        '',
+        '議題: ' + item.title,
+        '',
+        '管理画面にログインして内容を確かめ、事務局の評価を入力してください。',
+        PORTAL_URL + 'admin.html#' + encodeURIComponent(item.proposal_id),
+        '',
+        'みんカレポータル: ' + PORTAL_URL,
+        '',
+        '※このメールは自動で送られています。',
+      ].join('\n');
+      to.forEach(addr => {
+        try {
+          MailApp.sendEmail({ to: addr, subject: NOTIFY_SUBJECT, body: body, name: 'みんカレポータル' });
+        } catch (err) {
+          failed.push(addr + '（' + item.title + '）: ' + err);
+        }
+      });
+    });
+
+    // 宛先が空でも「送った」にする（毎時間、同じ警告が届かないように）
+    rpc_('ack_proposal_notifications', { p_secret: secret, p_ids: data.items.map(i => i.id) });
+    if (failed.length) alertOwner_('新しい議案の通知メールを送れなかった宛先があります。\n\n' + failed.join('\n'));
+  } catch (err) {
+    alertOwner_('新しい議案の通知メールの処理に失敗しました: ' + err);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function rpc_(name, payload) {
+  const res = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { apikey: SUPABASE_ANON, Authorization: 'Bearer ' + SUPABASE_ANON },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+  const code = res.getResponseCode();
+  if (code !== 200) throw new Error(name + ' が HTTP ' + code + ' を返しました: ' + res.getContentText());
+  return JSON.parse(res.getContentText());
+}
+
+function alertOwner_(text) {
+  MailApp.sendEmail({
+    to: Session.getEffectiveUser().getEmail(),
+    subject: '【みんカレポータル】議案の通知メールで問題がありました',
+    body: text + '\n\n議案の登録自体は済んでいます。管理画面の一覧に非公開の議案として出ています。',
   });
 }
