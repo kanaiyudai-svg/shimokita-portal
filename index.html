@@ -125,6 +125,11 @@
   .layout { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: var(--list-w) 1fr; min-height: calc(100vh - 118px); }
   .list-pane { background: var(--bg-sub); border-right: 1px solid var(--divider); padding: var(--sp-4) var(--sp-4) var(--sp-6); }
   .detail-pane { padding: var(--sp-5) var(--sp-5) 96px; min-width: 0; }
+
+  /* 広い画面では、左の一覧を画面の高さに固定して単独でスクロールさせる。右の詳細はページのスクロールで動く */
+  @media (min-width: 840px) {
+    .list-pane { position: sticky; top: var(--appbar-h, 64px); align-self: start; height: calc(100vh - var(--appbar-h, 64px)); overflow-y: auto; overscroll-behavior: contain; }
+  }
   .pane-head h1 { font-size: var(--fs-h1); font-weight: 700; line-height: 1.4; }
   .pane-desc { color: var(--text-2); margin-top: var(--sp-1); font-size: var(--fs-s); }
 
@@ -520,9 +525,18 @@ function trackPageView() {
     if (p) gtag('event', 'select_content', { content_type: 'proposal', item_id: state.sel, item_title: p.title, section: state.view });
   }
 }
+// ─── 左右の独立スクロール：上部バーの高さを一覧の固定位置に使う。詳細を切り替えたら右の先頭に戻す ───
+const appbarEl = document.querySelector('.appbar');
+new ResizeObserver(() => document.documentElement.style.setProperty('--appbar-h', `${appbarEl.offsetHeight}px`)).observe(appbarEl);
+function scrollDetailTop() {
+  if (!wide.matches) return;
+  const top = document.getElementById('layout').getBoundingClientRect().top + scrollY - appbarEl.offsetHeight;
+  if (scrollY > top) scrollTo(0, top);
+}
 window.addEventListener('hashchange', () => {
   route();
   if (!wide.matches && state.sel) document.getElementById('detail').focus({ preventScroll: true }), scrollTo(0, 0);
+  else scrollDetailTop();
 });
 wide.addEventListener('change', route);
 
