@@ -142,7 +142,10 @@
   .editor { max-width: 44em; }
   .back { display: none; }
   .ed-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); font-size: var(--fs-s); color: var(--text-2); }
-  .ed-title { font-size: var(--fs-h1); font-weight: 700; line-height: 1.4; margin-top: var(--sp-3); }
+  .ed-title { font-size: var(--fs-h1); font-weight: 700; line-height: 1.4; }
+  .ed-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); margin-top: var(--sp-3); }
+  .ed-head .pub { flex-shrink: 0; padding-top: 6px; }
+  .ed-head .pub-label { font-size: var(--fs-s); white-space: nowrap; }
   .sec { margin-top: var(--sp-5); padding: var(--sp-4); border: 1px solid var(--border); border-radius: var(--r-m); background: var(--surface); }
   .sec h3 { font-size: var(--fs-l); font-weight: 700; line-height: 1.4; margin-bottom: var(--sp-3); }
   .sec .foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); margin-top: var(--sp-4); }
@@ -194,6 +197,7 @@
   .sub-dl div { display: grid; grid-template-columns: 9em 1fr; gap: var(--sp-2); }
   .sub-dl dt { font-size: var(--fs-s); font-weight: 700; color: var(--text-2); }
   .sub-dl dd { overflow-wrap: anywhere; white-space: pre-wrap; }
+  .sub-pub { margin-top: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--border); }
   @media (max-width: 839px) { .sub-dl div { grid-template-columns: 1fr; gap: 0; } }
   .chip.c-yes { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
   .chip.c-no { background: #ffffff; border: 2px solid var(--primary); color: var(--primary); }
@@ -478,7 +482,7 @@ async function fetchProposals() {
 }
 // Googleフォームからの提出者情報（氏名・メール・伝言）。事務局だけが読める。表が未作成でも管理画面は動かす
 async function fetchSubmissions() {
-  const { data, error } = await db.from('proposal_submissions').select('item_id,submitter_name,submitter_email,extra_note,created_at');
+  const { data, error } = await db.from('proposal_submissions').select('*');
   state.submissions = error ? [] : (data || []);
 }
 const submissionOf = p => state.submissions.find(s => s.item_id === p.item_id);
@@ -545,15 +549,23 @@ function renderDetail() {
   const p = byId(state.sel);
   if (!p) { el.innerHTML = `<div class="detail-empty"><div>${ic('list')}<p>一覧から議案を選ぶと、ここで編集できます。</p></div></div>`; return; }
   const id = p.id, st = stOf(p), pub = p.is_published !== false;
+  // 事務局の評価は、公開するか決まるまで（非公開かつ検討中）は最上段に、決まったら最下段に置く
+  const reviewFirst = !pub && p.status === '提案中';
+  const reviewSec = `<section class="sec" aria-labelledby="h-review" id="review-sec">${reviewHtml(p)}</section>`;
   el.innerHTML = `
     <article class="editor" aria-labelledby="ed-title">
       <a class="btn-text back" href="#">${ic('chevron-left')}一覧に戻る</a>
       <div class="ed-top"><span id="ed-chip">${chipOf(p)}</span>${p.created_at ? `<span>提案日 <time datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time></span>` : ''}</div>
-      <h2 class="ed-title" id="ed-title">${escHtml(p.title)}</h2>
+      <div class="ed-head">
+        <h2 class="ed-title" id="ed-title">${escHtml(p.title)}</h2>
+        <div class="pub">
+          <span class="pub-label" id="publabel" aria-hidden="true">${pub ? '公開中' : '非公開'}</span>
+          <button class="switch" id="pub" role="switch" aria-checked="${pub}" aria-label="ポータルに公開" aria-describedby="pubdesc" onclick="togglePublish(this)"></button>
+          <span class="sr-only" id="pubdesc">オンにすると、この議案がポータルに表示されます</span>
+        </div>
+      </div>
 
-      ${submissionHtml(p)}
-
-      <section class="sec" aria-labelledby="h-review" id="review-sec">${reviewHtml(p)}</section>
+      ${reviewFirst ? reviewSec : ''}
 
       <section class="sec" aria-labelledby="h-status">
         <h3 id="h-status">状態</h3>
@@ -563,12 +575,22 @@ function renderDetail() {
         <div class="seg-note"><span id="sdesc">${st.desc}</span><span class="fb" id="sfb" role="status"></span></div>
       </section>
 
-      <section class="sec" aria-labelledby="h-pub">
-        <h3 id="h-pub">公開</h3>
-        <div class="pub">
-          <button class="switch" id="pub" role="switch" aria-checked="${pub}" aria-labelledby="publabel" aria-describedby="pubdesc" onclick="togglePublish(this)"></button>
-          <div><div class="pub-label" id="publabel">ポータルに公開する</div><div class="pub-desc" id="pubdesc">${pub ? 'いまはポータルに表示されています' : 'いまはポータルに表示されていません'}</div></div>
+      ${submissionHtml(p)}
+
+      <section class="sec" aria-labelledby="h-edit">
+        <h3 id="h-edit">タイトル・内容</h3>
+        <div class="fields">
+          <div class="f">
+            <label for="ietitle">タイトル<span class="req">※必須</span></label>
+            <input class="field" type="text" id="ietitle" value="${escHtml(p.title)}" aria-describedby="ietitle-err" oninput="clearFieldError(this)">
+            <p class="err-text" id="ietitle-err" hidden>＊タイトルを入力してください。</p>
+          </div>
+          <div class="f">
+            <label for="iedesc">内容・背景<span class="req">※任意</span></label>
+            <textarea class="field" id="iedesc" rows="5">${escHtml(p.description || '')}</textarea>
+          </div>
         </div>
+        <div class="foot"><button class="btn" id="iesave" onclick="saveEdit()">変更を保存</button><span class="fb" id="iefb" role="status"></span></div>
       </section>
 
       <section class="sec" aria-labelledby="h-minutes">
@@ -592,28 +614,13 @@ function renderDetail() {
         </div>
         <div class="foot"><button class="btn" id="msbtn" onclick="saveMinutes()">議事録を保存</button><span class="fb" id="msfb" role="status"></span></div>
       </section>
-
-      <section class="sec" aria-labelledby="h-edit">
-        <h3 id="h-edit">タイトル・内容</h3>
-        <div class="fields">
-          <div class="f">
-            <label for="ietitle">タイトル<span class="req">※必須</span></label>
-            <input class="field" type="text" id="ietitle" value="${escHtml(p.title)}" aria-describedby="ietitle-err" oninput="clearFieldError(this)">
-            <p class="err-text" id="ietitle-err" hidden>＊タイトルを入力してください。</p>
-          </div>
-          <div class="f">
-            <label for="iedesc">内容・背景<span class="req">※任意</span></label>
-            <textarea class="field" id="iedesc" rows="5">${escHtml(p.description || '')}</textarea>
-          </div>
-        </div>
-        <div class="foot"><button class="btn" id="iesave" onclick="saveEdit()">変更を保存</button><span class="fb" id="iefb" role="status"></span></div>
-      </section>
-
       <section class="sec danger-zone" aria-labelledby="h-del">
         <h3 id="h-del">議案の削除</h3>
-        <p>削除すると元に戻せません。ポータルから一時的に隠すだけなら、上の「公開」をオフにしてください。</p>
+        <p>削除すると元に戻せません。ポータルから一時的に隠すだけなら、タイトル横の公開スイッチをオフにしてください。</p>
         <button class="btn danger" onclick="deleteProposal()">${ic('trash-2')}この議案を削除</button>
       </section>
+
+      ${reviewFirst ? '' : reviewSec}
     </article>`;
 }
 
@@ -621,16 +628,23 @@ function renderDetail() {
 function submissionHtml(p) {
   const s = submissionOf(p);
   if (!s) return '';
+  const named = !!p.proposer_name;
   return `
       <section class="sec" aria-labelledby="h-sub">
         <h3 id="h-sub">フォームの提出者</h3>
-        <p class="support" style="margin:-8px 0 12px">この情報は事務局だけに表示され、ポータルには出ません。</p>
+        <p class="support" style="margin:-8px 0 12px">この情報は事務局だけに表示されます。ポータルに名前を出すかは、下のスイッチで決めます。</p>
         <dl class="sub-dl">
           <div><dt>氏名</dt><dd>${escHtml(s.submitter_name)}</dd></div>
           <div><dt>メールアドレス</dt><dd><a href="mailto:${escHtml(s.submitter_email)}">${escHtml(s.submitter_email)}</a></dd></div>
           <div><dt>提出日時</dt><dd><time datetime="${escHtml(s.created_at)}">${fmtDate(s.created_at)}</time></dd></div>
           <div><dt>事務局への伝言</dt><dd>${s.extra_note ? escHtml(s.extra_note) : 'なし'}</dd></div>
+          ${s.meeting_request ? `<div><dt>打ち合わせ</dt><dd>${escHtml(s.meeting_request)}</dd></div>` : ''}
+          ${s.name_public !== undefined ? `<div><dt>名前の公開の希望</dt><dd>${s.name_public ? 'カレッジ全体に公開してよい' : '事務局だけ（カレッジ全体には非公開）'}</dd></div>` : ''}
         </dl>
+        <div class="pub sub-pub">
+          <button class="switch" id="namepub" role="switch" aria-checked="${named}" aria-labelledby="namelabel" aria-describedby="namedesc" onclick="toggleProposerName(this)"></button>
+          <div><div class="pub-label" id="namelabel">ポータルに提案者の名前を出す</div><div class="pub-desc" id="namedesc">${named ? `いまは「${escHtml(p.proposer_name)}」と表示されます` : 'いまは匿名で表示されます'}</div></div>
+        </div>
       </section>`;
 }
 
@@ -767,10 +781,27 @@ async function togglePublish(sw) {
   const { error } = await db.from('proposals').update({ is_published: next, updated_at: new Date().toISOString() }).eq('id', id);
   sw.removeAttribute('aria-busy');
   if (error) { showToast('公開設定を変更できませんでした。もう一度お試しください'); return; }
-  sw.setAttribute('aria-checked', next);
-  document.getElementById('pubdesc').textContent = next ? 'いまはポータルに表示されています' : 'いまはポータルに表示されていません';
   patch(id, { is_published: next });
+  renderDetail(); // 公開が決まると評価欄の位置が変わるため描き直す
+  document.getElementById('pub').focus();
   showToast(next ? '議案を公開しました' : '議案を非公開にしました');
+}
+
+// ─── 提案者の名前の公開（フォーム経由の議案のみ。名前は提出者表から写す） ───
+async function toggleProposerName(sw) {
+  if (sw.getAttribute('aria-busy') === 'true') return;
+  const p = byId(state.sel), s = submissionOf(p), next = sw.getAttribute('aria-checked') !== 'true';
+  if (!s) return;
+  if (next && !s.name_public && !confirm('提出者は、名前をカレッジ全体に公開しない希望を出しています。それでも名前を出しますか。')) return;
+  const proposer_name = next ? s.submitter_name : '';
+  sw.setAttribute('aria-busy', 'true');
+  const { error } = await db.from('proposals').update({ proposer_name, updated_at: new Date().toISOString() }).eq('id', p.id);
+  sw.removeAttribute('aria-busy');
+  if (error) { showToast('名前の公開設定を変更できませんでした。もう一度お試しください'); return; }
+  sw.setAttribute('aria-checked', next);
+  document.getElementById('namedesc').textContent = next ? `いまは「${proposer_name}」と表示されます` : 'いまは匿名で表示されます';
+  patch(p.id, { proposer_name });
+  showToast(next ? '提案者の名前を公開しました' : '提案者を匿名にしました');
 }
 
 // ─── タイトル・内容の編集 ───

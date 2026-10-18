@@ -621,7 +621,8 @@ function renderHead() {
   const hasMinutes = p.status === '議論中' || p.status === '決議済み';
   head.innerHTML = `
     <div class="d-top">${chipOf(p)}${p.status === '取り上げ確定' ? '<span class="note">次回の議題に採用</span>' : ''}
-      ${p.created_at ? `<span>提案日 <time datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time></span>` : ''}</div>
+      ${p.created_at ? `<span>提案日 <time datetime="${escHtml(p.created_at)}">${fmtDate(p.created_at)}</time></span>` : ''}
+      ${p.proposer_name ? `<span>提案者 ${escHtml(p.proposer_name)}</span>` : ''}</div>
     <h2 class="d-title" id="d-title">${escHtml(p.title)}</h2>
     ${p.status === '決議済み' ? `<div class="banner success">${ic('circle-check')}<span><span class="banner-title">決議済み</span>この議案は全体会議で決議されました。経過は議事録から確認できます。</span></div>` : ''}
     ${hasMinutes ? `<div class="d-actions"><button class="btn outline" onclick="openMinutes(this)">${ic('file-text')}議事録を読む</button></div>` : ''}

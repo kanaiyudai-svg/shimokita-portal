@@ -19,6 +19,7 @@
  *         そのURLを Supabase の app_secrets に 'mail_relay_url' として登録する（SQLは notify_new_proposal.sql の6）。
  *   コードを直したとき: 「デプロイ」>「デプロイを管理」>鉛筆>バージョン「新バージョン」>デプロイ（URLは変わらない）。
  *   テスト: スクリプトプロパティに NOTIFY_ONLY_TO（自分のメール）を入れると、その1通だけに送る。終わったら必ず消す。
+ * ソースの控え: https://github.com/kanaiyudai-svg/shimokita-portal/blob/main/apps-script/form-to-portal.gs
  */
 const FORM_ID = '1U1TOMOjSAiqV-h2QqFDahPH1ToatmOG6kmgojSYIl_8';
 const SUPABASE_URL = 'https://ggdjoxnjwqthhkwpcvqq.supabase.co';
@@ -26,14 +27,19 @@ const SUPABASE_URL = 'https://ggdjoxnjwqthhkwpcvqq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZGpveG5qd3F0aGhrd3BjdnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTYyNjIsImV4cCI6MjA5MzczMjI2Mn0.X1AvGI5I8I94siB6MS1B_ou9TlA5864wUNsuy6SK4bc';
 
 // フォームの質問文の先頭でひも付ける（文言を少し直しても動くように前方一致）
+// 2026-10 のフォーム変更に合わせた。メールは質問でなく、フォームの「メールアドレスを収集」で取る
 const FIELD_PREFIX = {
-  name:    '氏名',
-  email:   'email',
-  title:   '議案',
-  summary: '概要',
-  reason:  '理由',
-  note:    'その他',
+  name:       '氏名',          // 氏名・呼び名
+  namePublic: '議題提案者',    // 議題提案者（あなた）の名前を公開してもいいですか？
+  title:      'タイトル',
+  summary:    '話したいこと',  // 話したいこと（議題候補）、提案内容
+  reason:     '話したい理由',  // 話したい理由、提案理由
+  note:       'その他',
+  meeting:    '事務局との打ち合わせ',
+  email:      'email',         // 旧フォームの質問。メール収集が切られたときの予備
 };
+// 名前公開の質問で「全体に公開してよい」を表す選択肢の書き出し
+const NAME_PUBLIC_YES = 'カレッジ全体に公開可';
 
 const PORTAL_URL = 'https://kanaiyudai-svg.github.io/shimokita-portal/';
 const NOTIFY_SUBJECT = '新たな議題が提出されました';
@@ -60,13 +66,15 @@ function onFormSubmit(e) {
   });
 
   const body = {
-    p_secret:  PropertiesService.getScriptProperties().getProperty('FORM_SECRET'),
-    p_name:    answers.name || '',
-    p_email:   answers.email || '',
-    p_title:   answers.title || '',
-    p_summary: answers.summary || '',
-    p_reason:  answers.reason || '',
-    p_note:    answers.note || '',
+    p_secret:      PropertiesService.getScriptProperties().getProperty('FORM_SECRET'),
+    p_name:        answers.name || '',
+    p_email:       e.response.getRespondentEmail() || answers.email || '',
+    p_title:       answers.title || '',
+    p_summary:     answers.summary || '',
+    p_reason:      answers.reason || '',
+    p_note:        answers.note || '',
+    p_name_public: (answers.namePublic || '').indexOf(NAME_PUBLIC_YES) === 0,
+    p_meeting:     answers.meeting || '',
   };
 
   let res;
