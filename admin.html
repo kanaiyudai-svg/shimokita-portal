@@ -562,7 +562,7 @@ function renderDetail() {
   const p = byId(state.sel);
   if (!p) { el.innerHTML = `<div class="detail-empty"><div>${ic('list')}<p>一覧から議案を選ぶと、ここで編集できます。</p></div></div>`; return; }
   const id = p.id, st = stOf(p), pub = p.is_published !== false;
-  // 事務局の評価は、公開するか決まるまで（非公開かつ検討中）は最上段に、決まったら最下段に置く
+  // 事務局の評価は、公開するか決まるまで（非公開かつ検討中）は最上段に、決まったら削除の直前に置く。削除は常に最下段
   const reviewFirst = !pub && p.status === '提案中';
   const reviewSec = `<section class="sec" aria-labelledby="h-review" id="review-sec">${reviewHtml(p)}</section>`;
   el.innerHTML = `
@@ -627,13 +627,13 @@ function renderDetail() {
         </div>
         <div class="foot"><button class="btn" id="msbtn" onclick="saveMinutes()">議事録を保存</button><span class="fb" id="msfb" role="status"></span></div>
       </section>
+      ${reviewFirst ? '' : reviewSec}
+
       <section class="sec danger-zone" aria-labelledby="h-del">
         <h3 id="h-del">議案の削除</h3>
         <p>削除すると元に戻せません。ポータルから一時的に隠すだけなら、タイトル横の公開スイッチをオフにしてください。</p>
         <button class="btn danger" onclick="deleteProposal()">${ic('trash-2')}この議案を削除</button>
       </section>
-
-      ${reviewFirst ? '' : reviewSec}
     </article>`;
 }
 
