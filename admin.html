@@ -111,7 +111,7 @@
   .appbar nav { display: flex; align-items: center; gap: var(--sp-3); font-size: var(--fs-s); }
   #user-email { color: var(--text-2); }
 
-  .stats { max-width: 1280px; margin: 0 auto; padding: var(--sp-4) var(--sp-4) 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); }
+  .stats { max-width: 1280px; margin: 0 auto; padding: var(--sp-4) var(--sp-4) 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); }
   .stat { padding: 12px var(--sp-3); border: 1px solid var(--border); border-radius: var(--r-m); background: var(--surface); }
   .stat dt { display: flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-s); color: var(--text-2); }
   .stat dt .ic { width: 1em; height: 1em; }
@@ -218,7 +218,7 @@
   @media (max-width: 839px) {
     .appbar-in { padding: 0 var(--sp-3); }
     #user-email { display: none; }
-    .stats { grid-template-columns: repeat(2, 1fr); padding: var(--sp-3) var(--sp-3) 0; }
+    .stats { grid-template-columns: repeat(3, 1fr); padding: var(--sp-3) var(--sp-3) 0; }
     #admin-error { margin: var(--sp-3) var(--sp-3) 0; }
     .layout { grid-template-columns: 1fr; margin-top: var(--sp-3); }
     .list-pane { border-right: none; padding: var(--sp-3); }
@@ -317,10 +317,9 @@
   </header>
 
   <dl class="stats">
-    <div class="stat"><dt><span data-icon="circle"></span>検討中</dt><dd id="st-提案中">-</dd></div>
-    <div class="stat"><dt><span data-icon="calendar"></span>採択予定</dt><dd id="st-取り上げ確定">-</dd></div>
-    <div class="stat"><dt><span data-icon="message-circle"></span>審議中</dt><dd id="st-議論中">-</dd></div>
-    <div class="stat"><dt><span data-icon="circle-check"></span>決議済み</dt><dd id="st-決議済み">-</dd></div>
+    <div class="stat"><dt><span data-icon="circle"></span>提案</dt><dd id="st-proposals">-</dd></div>
+    <div class="stat"><dt><span data-icon="message-circle"></span>審議中</dt><dd id="st-active">-</dd></div>
+    <div class="stat"><dt><span data-icon="circle-check"></span>過去の議案</dt><dd id="st-past">-</dd></div>
   </dl>
   <div class="banner error" id="admin-error" hidden></div>
 
@@ -370,10 +369,10 @@ const LUCIDE = {
 const ic = name => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${LUCIDE[name]}</svg>`;
 
 const STATUSES = [
-  { key:'提案中',      label:'検討中',   chip:'',              icon:'circle',         desc:'ポータルの「提案」に表示' },
-  { key:'取り上げ確定', label:'採択予定', chip:'c-key-outline', icon:'calendar',       desc:'ポータルの「提案」に「次回の議題に採用」付きで表示' },
-  { key:'議論中',      label:'審議中',   chip:'c-key',         icon:'message-circle', desc:'ポータルの「審議中」に移動し、議事録ボタンを表示' },
-  { key:'決議済み',    label:'決議済み', chip:'c-success',     icon:'circle-check',   desc:'ポータルの「過去の議案」に移動' },
+  { key:'提案中',      label:'検討中',   view:'proposals', chip:'',              icon:'circle',         desc:'ポータルの「提案」に表示' },
+  { key:'取り上げ確定', label:'提案',     view:'proposals', chip:'c-key-outline', icon:'calendar',       desc:'ポータルの「提案」に「次回の議題に採用」付きで表示' },
+  { key:'議論中',      label:'審議中',   view:'active',    chip:'c-key',         icon:'message-circle', desc:'ポータルの「審議中」に移動し、議事録ボタンを表示' },
+  { key:'決議済み',    label:'決議済み', view:'past',      chip:'c-success',     icon:'circle-check',   desc:'ポータルの「過去の議案」に移動' },
 ];
 const STATUS_BY_KEY = Object.fromEntries(STATUSES.map(s => [s.key, s]));
 const stOf = p => STATUS_BY_KEY[p.status] || STATUSES[0];
@@ -502,7 +501,7 @@ const staffName = uid => (state.staff.find(s => s.user_id === uid) || {}).name |
 const byId = id => state.items.find(p => String(p.id) === String(id));
 
 function updateStats() {
-  STATUSES.forEach(s => { document.getElementById(`st-${s.key}`).textContent = state.items.filter(p => p.status === s.key).length; });
+  ['proposals', 'active', 'past'].forEach(v => { document.getElementById(`st-${v}`).textContent = state.items.filter(p => stOf(p).view === v).length; });
   document.getElementById('list-count').textContent = `${state.items.length}件`;
 }
 
