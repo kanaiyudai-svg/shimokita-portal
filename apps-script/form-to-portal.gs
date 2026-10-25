@@ -19,6 +19,14 @@
  *         そのURLを Supabase の app_secrets に 'mail_relay_url' として登録する（SQLは notify_new_proposal.sql の6）。
  *   コードを直したとき: 「デプロイ」>「デプロイを管理」>鉛筆>バージョン「新バージョン」>デプロイ（URLは変わらない）。
  *   テスト: スクリプトプロパティに NOTIFY_ONLY_TO（自分のメール）を入れると、その1通だけに送る。終わったら必ず消す。
+ *
+ * 【Slack への通知】（Supabase の supabase/slack_notify.sql と対。メールと同じ合図で動く。クロコは介在しない）
+ * 新しい議案の通知を送るとき、スクリプトプロパティ SLACK_WEBHOOK_URL があれば、Slack の事務局チャンネルへも投稿する。
+ * 投票する事務局メンバーは、Supabase の staff 表の slack_user_id で呼ぶ（入れ替えは staff 表の更新だけで済む）。
+ * 無ければ Slack には何もせず、メールだけ送る。URLは公開リポジトリに書かず、スクリプトプロパティにだけ置く。
+ *   設置: Slack で受け口（Incoming Webhook）を作って事務局チャンネルに向け、出てくるURLを SLACK_WEBHOOK_URL に入れる。
+ *   テスト: 関数 testSlack を1回実行すると、メンションなしの確認用の1行をチャンネルに投稿する。
+ *   NOTIFY_ONLY_TO（メールのテスト用）が入っている間は、Slack には投稿しない。
  * ソースの控え: https://github.com/kanaiyudai-svg/shimokita-portal/blob/main/apps-script/form-to-portal.gs
  */
 const FORM_ID = '1U1TOMOjSAiqV-h2QqFDahPH1ToatmOG6kmgojSYIl_8';
@@ -155,14 +163,61 @@ function sendPendingNotifications() {
       });
     });
 
+    // Slack への投稿。失敗してもメールは送れているので、ここで止めず、知らせるだけにする
+    const slackUrl = props.getProperty('SLACK_WEBHOOK_URL');
+    if (slackUrl && !only) {
+      const ids = data.slack_ids || [];
+      if (!ids.length) failed.push('Slack で呼ぶ事務局メンバーが登録されていません（staff 表の slack_user_id が空です）。メンションなしで投稿しました。');
+      try {
+        postSlack_(slackUrl, ids, data.items);
+      } catch (err) {
+        failed.push('Slack への投稿に失敗しました: ' + err);
+      }
+    }
+
     // 宛先が空でも「送った」にする（毎時間、同じ警告が届かないように）
     rpc_('ack_proposal_notifications', { p_secret: secret, p_ids: data.items.map(i => i.id) });
-    if (failed.length) alertOwner_('新しい議案の通知メールを送れなかった宛先があります。\n\n' + failed.join('\n'));
+    if (failed.length) alertOwner_('新しい議案の通知で、送れなかったところがあります。\n\n' + failed.join('\n'));
   } catch (err) {
     alertOwner_('新しい議案の通知メールの処理に失敗しました: ' + err);
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * 事務局チャンネルへ「新しい議案が提出された」と投稿し、投票する事務局メンバーを呼ぶ。
+ * 議案名は載せない（評価が済むまで非公開の議案のため。リンク先は事務局のログインが要る）。
+ */
+function postSlack_(url, ids, items) {
+  const mention = ids.map(id => '<@' + id + '>').join(' ');
+  const links = items.map(i => PORTAL_URL + 'admin.html#' + encodeURIComponent(i.proposal_id)).join('\n');
+  const head = items.length > 1 ? '新しい議案が' + items.length + '件提出されたよ。' : '新しい議案が提出されたよ。';
+  const text = [
+    (mention ? mention + ' ' : '') + head + '内容を確かめて、事務局の評価を入力してね。',
+    links,
+    '',
+    'みんカレポータル: ' + PORTAL_URL,
+  ].join('\n');
+  slackPost_(url, text);
+}
+
+function slackPost_(url, text) {
+  const res = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({ text: text, unfurl_links: false, unfurl_media: false }),
+    muteHttpExceptions: true,
+  });
+  const code = res.getResponseCode();
+  if (code !== 200) throw new Error('Slack が HTTP ' + code + ' を返しました: ' + res.getContentText());
+}
+
+/** Slack の受け口がつながっているかの確認。メンションなしの1行だけを投稿する。手で1回実行する */
+function testSlack() {
+  const url = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL');
+  if (!url) throw new Error('スクリプトプロパティ SLACK_WEBHOOK_URL がありません');
+  slackPost_(url, '【テスト】みんカレポータルからの接続確認です。このメッセージは無視してください。');
 }
 
 function rpc_(name, payload) {
